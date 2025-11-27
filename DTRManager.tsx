@@ -32,15 +32,20 @@ export const DTRManager = ({
       setError("All fields are required.");
       return;
     }
-
     if (timeIn === timeOut) {
       setError("Time In cannot be the same as Time Out.");
       return;
     }
-
     const duration = calculateHours(timeIn, timeOut);
     if (duration <= 0) {
       setError("Invalid time range. Duration must be greater than 0.");
+      return;
+    }
+    const exists = dtrEntries.some(
+      (e) => e.employeeId === empId && e.date === date
+    );
+    if (exists) {
+      setError("This employee already has a DTR entry for this date.");
       return;
     }
 
