@@ -1,7 +1,35 @@
 export const OT_MULTIPLIER = 1.25;
 
-// --- PHILIPPINE HOLIDAYS API (2025 + 2026) ---
+// --- REGIONAL MINIMUM WAGE DATA (Daily Rates - approximated 2024/2025) ---
+// Source: RTWPB Wage Orders (Simplified for top regions)
+// We assume 8 working hours to derive hourly rate.
+export const REGIONS: Record<string, { name: string; dailyWage: number }> = {
+  NCR: { name: "National Capital Region", dailyWage: 645 },
+  CAR: { name: "Cordillera Admin Region", dailyWage: 430 },
+  I: { name: "Region I (Ilocos)", dailyWage: 435 },
+  II: { name: "Region II (Cagayan Valley)", dailyWage: 450 },
+  III: { name: "Region III (Central Luzon)", dailyWage: 500 },
+  "IV-A": { name: "Region IV-A (Calabarzon)", dailyWage: 560 }, // Using highest bracket for safety
+  "IV-B": { name: "Region IV-B (Mimaropa)", dailyWage: 395 },
+  V: { name: "Region V (Bicol)", dailyWage: 395 },
+  VI: { name: "Region VI (Western Visayas)", dailyWage: 480 },
+  VII: { name: "Region VII (Central Visayas)", dailyWage: 468 },
+  VIII: { name: "Region VIII (Eastern Visayas)", dailyWage: 405 },
+  IX: { name: "Region IX (Zamboanga)", dailyWage: 381 },
+  X: { name: "Region X (Northern Mindanao)", dailyWage: 438 },
+  XI: { name: "Region XI (Davao)", dailyWage: 462 },
+  XII: { name: "Region XII (Soccsksargen)", dailyWage: 403 },
+  XIII: { name: "Caraga", dailyWage: 385 },
+  BARMM: { name: "BARMM", dailyWage: 361 },
+};
 
+export const getMinHourlyWage = (regionCode: string): number => {
+  const region = REGIONS[regionCode] || REGIONS["NCR"];
+  return region.dailyWage / 8;
+};
+
+// --- PHILIPPINE HOLIDAYS API (Simulated for 2025) ---
+// In a real app, this could fetch from an endpoint.
 export const getPHHolidays2025 = () => {
   return [
     { date: "2025-01-01", name: "New Year's Day", type: "Regular" },
@@ -90,59 +118,68 @@ export const getHolidayName = (dateStr: string): string | null => {
   return holiday ? `${holiday.name} (${holiday.type})` : null;
 };
 
-// ===============================
-//     SSS CONTRIBUTION LOGIC
-// ===============================
+// SSS Table Logic (2025: 5% Employee Share, Min 5k, Max 35k MSC)
 export const calculateSSS = (grossPay: number): number => {
   const minMSC = 5000;
   const maxMSC = 35000;
 
-  let msc = Math.min(Math.max(grossPay, minMSC), maxMSC);
+  // Determine MSC
+  let msc = grossPay;
+  if (grossPay < minMSC) msc = minMSC;
+  if (grossPay > maxMSC) msc = maxMSC;
 
-  return msc * 0.05; // Employee share 5%
+  // Employee Share is 5%
+  return msc * 0.05;
 };
 
-// EC employer share
+// SSS Employee Compensation (EC) Logic (Employer Share)
 export const calculateSSSEC = (grossPay: number): number => {
   const minMSC = 5000;
   const maxMSC = 35000;
 
-  let msc = Math.min(Math.max(grossPay, minMSC), maxMSC);
+  // Determine MSC
+  let msc = grossPay;
+  if (grossPay < minMSC) msc = minMSC;
+  if (grossPay > maxMSC) msc = maxMSC;
 
-  return msc < 15000 ? 10 : 30;
+  // EC Rule: Below 15k = 10, 15k and above = 30
+  if (msc < 15000) {
+    return 10;
+  } else {
+    return 30;
+  }
 };
 
-// ===============================
-//       BIR / TRAIN LAW
-// ===============================
+// BIR Tax Table Logic (TRAIN Law)
 export const calculateBIR = (taxableIncome: number): number => {
-  if (taxableIncome <= 20833) return 0;
-  if (taxableIncome <= 33333) return (taxableIncome - 20833) * 0.2;
-  if (taxableIncome <= 66666) return 2500 + (taxableIncome - 33333) * 0.25;
-  if (taxableIncome <= 166666) return 10833 + (taxableIncome - 66666) * 0.3;
-  if (taxableIncome <= 666666) return 40833 + (taxableIncome - 166666) * 0.32;
-  return 200833 + (taxableIncome - 666666) * 0.35;
+  // If calculation results in negative taxable income, return 0
+  if (taxableIncome <= 0) return 0;
+
+  if (taxableIncome <= 20833) {
+    return 0;
+  } else if (taxableIncome <= 33333) {
+    return (taxableIncome - 20833) * 0.2;
+  } else if (taxableIncome <= 66666) {
+    return 2500 + (taxableIncome - 33333) * 0.25;
+  } else if (taxableIncome <= 166666) {
+    return 10833 + (taxableIncome - 66666) * 0.3;
+  } else if (taxableIncome <= 666666) {
+    return 40833 + (taxableIncome - 166666) * 0.32;
+  } else {
+    return 200833 + (taxableIncome - 666666) * 0.35;
+  }
 };
 
-// ===============================
-//      TIME DIFF (HOURS)
-// ===============================
+// Helper: Time Diff in Hours
 export const calculateHours = (inTime: string, outTime: string): number => {
   if (!inTime || !outTime) return 0;
-
   const start = new Date(`1970-01-01T${inTime}:00`);
   const end = new Date(`1970-01-01T${outTime}:00`);
-
-  // Handle overnight shifts (e.g., 22:00 → 06:00 next day)
   let diffMs = end.getTime() - start.getTime();
-  if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
-
-  return diffMs / (1000 * 60 * 60); // convert ms → hours
+  if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000; // Handle overnight
+  return diffMs / (1000 * 60 * 60);
 };
 
-// ===============================
-//       CURRENCY FORMATTER
-// ===============================
 export const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("en-PH", {
     style: "currency",

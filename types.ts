@@ -2,6 +2,7 @@ export interface Employee {
   id: string;
   name: string;
   hourlyRate: number;
+  region: string; // Region code (e.g., 'NCR', 'IV-A') for minimum wage checking
   totalLoan: number; // The starting total balance of the loan
 }
 
@@ -38,4 +39,5 @@ export interface PayrollResult {
   loanDeduction: number;
   totalDeduction: number;
   netPay: number;
+  isMWE: boolean; // Flag to indicate if employee is Minimum Wage Earner
 }

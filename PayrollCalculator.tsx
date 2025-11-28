@@ -18,12 +18,16 @@ import {
   OT_MULTIPLIER,
   getHolidayMultiplier,
   getHolidayName,
+  getMinHourlyWage,
 } from "./utils";
 
 interface PayrollCalculatorProps {
   employees: Employee[];
   dtrEntries: DTREntry[];
 }
+
+// Helper for precision
+const round = (num: number) => Math.round((num + Number.EPSILON) * 100) / 100;
 
 export const PayrollCalculator = ({
   employees,
@@ -84,8 +88,23 @@ export const PayrollCalculator = ({
       regularPay + regularHolidayPay + specialHolidayPay + overtimePay;
     const sssDeduction = calculateSSS(grossPay);
     const sssEC = calculateSSSEC(grossPay);
-    const taxableIncome = Math.max(0, grossPay - sssDeduction);
-    const birTax = calculateBIR(taxableIncome);
+
+    // TAX LOGIC: Check for Minimum Wage Earner (MWE) status
+    const minWage = getMinHourlyWage(emp.region || "NCR");
+    // We use a small epsilon for float comparison safety or direct <= check.
+    // If hourly rate is <= minimum wage, they are MWE.
+    const isMWE = emp.hourlyRate <= minWage + 0.01;
+
+    let birTax = 0;
+    if (isMWE) {
+      // MWEs are exempt from income tax (including holiday pay)
+      birTax = 0;
+    } else {
+      // Non-MWEs: Holiday pay is part of Gross, so it gets taxed normally
+      const taxableIncome = Math.max(0, grossPay - sssDeduction);
+      birTax = calculateBIR(taxableIncome);
+    }
+
     const netBeforeLoan = grossPay - (sssDeduction + birTax);
 
     // Strict 25% Logic
@@ -108,6 +127,7 @@ export const PayrollCalculator = ({
         birTax,
         netBeforeLoan,
         loanDeductionAmount,
+        isMWE,
       },
     };
   };
@@ -127,28 +147,37 @@ export const PayrollCalculator = ({
     if (!uniqueMonths.includes(month)) uniqueMonths.push(month);
     uniqueMonths.sort();
 
-    // Initial Balance
-    let currentLoanBalance = emp.totalLoan || 0;
+    // Initial Balance (Round to ensure clean math)
+    let currentLoanBalance = round(emp.totalLoan || 0);
 
     let targetMonthData = null;
     let targetLoanDeduction = 0;
 
     // Iterate chronologically
     for (const m of uniqueMonths) {
+      // Stop if we passed the selected month
+      if (m > month) break;
+
       const calc = calculateMonthData(emp, m, employeeDtrs);
 
       if (calc.hasRecords && calc.data) {
         // Logic: Strictly 25% of Net Pay (unless balance is lower)
-        const deduction = Math.min(
+        // Round deduction to avoid float issues (e.g. 0.000001)
+        let deduction = Math.min(
           calc.data.loanDeductionAmount,
           currentLoanBalance
         );
+        deduction = round(deduction);
 
         if (m === month) {
           targetMonthData = calc.data;
           targetLoanDeduction = deduction;
+          // STOP here to preserve currentLoanBalance as the "Beginning Balance" for this month
+          break;
         } else {
-          currentLoanBalance = Math.max(0, currentLoanBalance - deduction);
+          currentLoanBalance = round(
+            Math.max(0, currentLoanBalance - deduction)
+          );
         }
       } else if (m === month) {
         return { result: null, hasRecords: false, loanInfo: null };
@@ -164,13 +193,18 @@ export const PayrollCalculator = ({
       targetLoanDeduction;
     const netPay = targetMonthData.grossPay - totalDeduction;
 
+    // Calculate ending balance for display
+    const balanceAfter = round(
+      Math.max(0, currentLoanBalance - targetLoanDeduction)
+    );
+
     return {
       hasRecords: true,
       loanInfo: {
         totalLoan: emp.totalLoan || 0,
         balanceBefore: currentLoanBalance,
         payment: targetLoanDeduction,
-        balanceAfter: Math.max(0, currentLoanBalance - targetLoanDeduction),
+        balanceAfter: balanceAfter,
       },
       result: {
         ...targetMonthData,
@@ -186,17 +220,13 @@ export const PayrollCalculator = ({
     if (mode !== "annual") return [];
 
     return employees.map((emp) => {
-      const yearlyDTRs = dtrEntries.filter(
-        (d) => d.employeeId === emp.id && d.date.startsWith(year)
-      );
-
       // Re-run timeline logic to get accurate loan payments for the specific year
       const allDTRs = dtrEntries.filter((d) => d.employeeId === emp.id);
       const allMonths = Array.from(
         new Set(allDTRs.map((d) => d.date.slice(0, 7)))
       ).sort();
 
-      let runningLoanBalance = emp.totalLoan || 0;
+      let runningLoanBalance = round(emp.totalLoan || 0);
       let annualGross = 0;
       let annualSSS = 0;
       let annualBIR = 0;
@@ -205,11 +235,14 @@ export const PayrollCalculator = ({
       allMonths.forEach((m) => {
         const calc = calculateMonthData(emp, m, allDTRs);
         if (calc.hasRecords && calc.data) {
-          const deduction = Math.min(
+          let deduction = Math.min(
             calc.data.loanDeductionAmount,
             runningLoanBalance
           );
-          runningLoanBalance = Math.max(0, runningLoanBalance - deduction);
+          deduction = round(deduction);
+          runningLoanBalance = round(
+            Math.max(0, runningLoanBalance - deduction)
+          );
 
           // Only accumulate for the selected year report
           if (m.startsWith(year)) {
@@ -366,6 +399,20 @@ export const PayrollCalculator = ({
                         {formatCurrency(selectedEmployeeData?.hourlyRate || 0)}
                       </span>
                     </div>
+                    <div className="text-right md:text-left">
+                      <span className="block text-xs font-bold text-slate-400 uppercase mb-1">
+                        Region (Min Wage)
+                      </span>
+                      <span className="block font-mono text-slate-700 text-xs">
+                        {selectedEmployeeData?.region || "NCR"} (
+                        {formatCurrency(
+                          getMinHourlyWage(
+                            selectedEmployeeData?.region || "NCR"
+                          )
+                        )}
+                        )
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -467,7 +514,10 @@ export const PayrollCalculator = ({
                               </span>
                             </td>
                             <td className="text-right font-mono text-slate-500 text-xs">
-                              -
+                              {formatCurrency(
+                                (selectedEmployeeData?.hourlyRate || 0) *
+                                  OT_MULTIPLIER
+                              )}
                             </td>
                             <td className="text-right font-mono text-slate-500">
                               {monthlyCalculation.result.overtimeHours.toFixed(
@@ -525,7 +575,14 @@ export const PayrollCalculator = ({
                             </td>
                           </tr>
                           <tr className="border-b border-slate-100 last:border-0">
-                            <td className="py-2">Withholding Tax (BIR)</td>
+                            <td className="py-2">
+                              Withholding Tax (BIR)
+                              {monthlyCalculation.result.isMWE && (
+                                <span className="block text-[10px] text-emerald-600 font-medium">
+                                  MWE - Tax Exempt
+                                </span>
+                              )}
+                            </td>
                             <td className="text-right font-medium text-rose-600">
                               (
                               {formatCurrency(monthlyCalculation.result.birTax)}
@@ -537,10 +594,10 @@ export const PayrollCalculator = ({
                               Loan Repayment
                               <div className="mt-1 space-y-0.5">
                                 <div className="text-[10px] text-slate-400">
-                                  Balance:{" "}
+                                  Remaining Balance:{" "}
                                   {formatCurrency(
-                                    monthlyCalculation.loanInfo
-                                      ?.balanceBefore || 0
+                                    monthlyCalculation.loanInfo?.balanceAfter ||
+                                      0
                                   )}
                                 </div>
                                 <div className="text-[10px] text-amber-600 font-medium">
@@ -549,11 +606,11 @@ export const PayrollCalculator = ({
                               </div>
                             </td>
                             <td className="text-right font-medium text-rose-600 align-top">
-                              (
-                              {formatCurrency(
-                                monthlyCalculation.result.loanDeduction
-                              )}
-                              )
+                              {monthlyCalculation.result.loanDeduction > 0
+                                ? `(${formatCurrency(
+                                    monthlyCalculation.result.loanDeduction
+                                  )})`
+                                : "-"}
                             </td>
                           </tr>
                         </tbody>
@@ -621,8 +678,9 @@ export const PayrollCalculator = ({
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-blue-800 flex gap-3">
                   <AlertCircle className="w-5 h-5 flex-shrink-0" />
                   <div>
-                    <strong>Tax Note:</strong> BIR tax is calculated using TRAIN
-                    Law Monthly Tables. Holiday pay is taxable.
+                    <strong>Tax Note:</strong> MWEs are exempt from tax on
+                    holiday pay, OT, and basic pay. Non-MWEs are taxed on Gross
+                    (including holiday pay).
                   </div>
                 </div>
                 <div className="bg-amber-50 p-4 rounded-lg border border-amber-100 text-sm text-amber-800 flex gap-3">
@@ -667,53 +725,58 @@ export const PayrollCalculator = ({
                 <Printer className="w-4 h-4" /> Print Report
               </button>
             </div>
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold tracking-wider">
-                  <th className="p-4">Employee</th>
-                  <th className="p-4 text-right">Total Gross</th>
-                  <th className="p-4 text-right">Total SSS</th>
-                  <th className="p-4 text-right">Total Tax</th>
-                  <th className="p-4 text-right">Total Loan Paid</th>
-                  <th className="p-4 text-right">Total Net Pay</th>
-                </tr>
-              </thead>
-              <tbody>
-                {annualData.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-500">
-                      No data found.
-                    </td>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-max">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold tracking-wider">
+                    <th className="p-4">Employee</th>
+                    <th className="p-4 text-right">Total Gross</th>
+                    <th className="p-4 text-right">Total SSS</th>
+                    <th className="p-4 text-right">Total Tax</th>
+                    <th className="p-4 text-right">Total Loan Paid</th>
+                    <th className="p-4 text-right">Total Net Pay</th>
                   </tr>
-                ) : (
-                  annualData.map((data) => (
-                    <tr
-                      key={data.id}
-                      className="border-b border-slate-100 hover:bg-slate-50 text-sm"
-                    >
-                      <td className="p-4 font-bold text-slate-700">
-                        {data.name}
-                      </td>
-                      <td className="p-4 text-right font-medium text-slate-600">
-                        {formatCurrency(data.gross)}
-                      </td>
-                      <td className="p-4 text-right text-rose-600">
-                        ({formatCurrency(data.sss)})
-                      </td>
-                      <td className="p-4 text-right text-rose-600">
-                        ({formatCurrency(data.bir)})
-                      </td>
-                      <td className="p-4 text-right text-rose-600">
-                        ({formatCurrency(data.loan)})
-                      </td>
-                      <td className="p-4 text-right font-bold text-emerald-600">
-                        {formatCurrency(data.net)}
+                </thead>
+                <tbody>
+                  {annualData.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="p-8 text-center text-slate-500"
+                      >
+                        No data found.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    annualData.map((data) => (
+                      <tr
+                        key={data.id}
+                        className="border-b border-slate-100 hover:bg-slate-50 text-sm"
+                      >
+                        <td className="p-4 font-bold text-slate-700">
+                          {data.name}
+                        </td>
+                        <td className="p-4 text-right font-medium text-slate-600">
+                          {formatCurrency(data.gross)}
+                        </td>
+                        <td className="p-4 text-right text-rose-600">
+                          ({formatCurrency(data.sss)})
+                        </td>
+                        <td className="p-4 text-right text-rose-600">
+                          ({formatCurrency(data.bir)})
+                        </td>
+                        <td className="p-4 text-right text-rose-600">
+                          ({formatCurrency(data.loan)})
+                        </td>
+                        <td className="p-4 text-right font-bold text-emerald-600">
+                          {formatCurrency(data.net)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

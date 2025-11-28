@@ -16,10 +16,23 @@ import { PayrollCalculator } from "./PayrollCalculator";
 
 // --- SEED DATA GENERATION ---
 const SEED_EMPLOYEES: Employee[] = [
-  // Maria has a 50k loan, deduction will be 25% of her monthly net pay
-  { id: "EMP001", name: "Maria Santos", hourlyRate: 450.0, totalLoan: 50000.0 },
-  // Pedro has no loan
-  { id: "EMP002", name: "Pedro Penduko", hourlyRate: 280.5, totalLoan: 0 },
+  // Maria: NCR, Rate 350 (Above NCR Min 645/8 = 80.6), Taxable
+  {
+    id: "EMP001",
+    name: "Maria Santos",
+    hourlyRate: 350.0,
+    totalLoan: 50000.0,
+    region: "NCR",
+  },
+  // Pedro: Region I, Rate 55 (Min is 435/8 = 54.375). He is approx MWE.
+  // Let's make him clearly MWE for Region I
+  {
+    id: "EMP002",
+    name: "Pedro Penduko",
+    hourlyRate: 54.38,
+    totalLoan: 0,
+    region: "I",
+  },
 ];
 
 const generateSeedDTR = (): DTREntry[] => {
@@ -70,12 +83,12 @@ const generateSeedDTR = (): DTREntry[] => {
   };
 
   // Generate 6 months for Maria (Jan - June 2025)
-  for (let m = 5; m <= 11; m++) {
+  for (let m = 0; m <= 5; m++) {
     addMonthLogs("EMP001", 2025, m, 8); // 8:00 AM Start
   }
 
   // Generate 2 months for Pedro (May - June 2025)
-  for (let m = 3; m <= 4; m++) {
+  for (let m = 4; m <= 5; m++) {
     addMonthLogs("EMP002", 2025, m, 9); // 9:00 AM Start
   }
 
@@ -173,14 +186,15 @@ const App = () => {
         </div>
 
         <div className="absolute bottom-0 w-full p-6 text-slate-500 text-xs text-center border-t border-slate-800">
-          &copy; 2025 PayrollPro System
+          &copy; 2025 PayrollPro System <br />
+          marckevzzz
         </div>
       </aside>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 md:px-8">
+        <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between sm:justify-end px-4 md:px-8">
           <button
             className="md:hidden text-slate-600 p-2 hover:bg-slate-100 rounded-lg"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}

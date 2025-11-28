@@ -316,7 +316,7 @@ export const Dashboard = ({ employees, dtrEntries }: DashboardProps) => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <PieChart className="w-5 h-5 text-indigo-500" /> Payroll
@@ -330,6 +330,7 @@ export const Dashboard = ({ employees, dtrEntries }: DashboardProps) => {
                 viewBox="0 0 32 32"
                 className="w-full h-full transform -rotate-90"
               >
+                {/* Background Circle */}
                 <circle
                   cx="16"
                   cy="16"
@@ -339,6 +340,9 @@ export const Dashboard = ({ employees, dtrEntries }: DashboardProps) => {
                   strokeWidth="4"
                 />
 
+                {/* Segments with pathLength="100" ensures mapped percentages align correctly to circumference */}
+
+                {/* Net Pay (Emerald) */}
                 <circle
                   cx="16"
                   cy="16"
@@ -348,9 +352,11 @@ export const Dashboard = ({ employees, dtrEntries }: DashboardProps) => {
                   strokeWidth="4"
                   strokeDasharray={`${netPct} 100`}
                   strokeDashoffset="0"
+                  pathLength="100"
                   className="transition-all duration-1000"
                 />
 
+                {/* SSS (Blue) */}
                 <circle
                   cx="16"
                   cy="16"
@@ -360,9 +366,11 @@ export const Dashboard = ({ employees, dtrEntries }: DashboardProps) => {
                   strokeWidth="4"
                   strokeDasharray={`${sssPct} 100`}
                   strokeDashoffset={`-${netPct}`}
+                  pathLength="100"
                   className="transition-all duration-1000"
                 />
 
+                {/* BIR (Orange) */}
                 <circle
                   cx="16"
                   cy="16"
@@ -372,9 +380,11 @@ export const Dashboard = ({ employees, dtrEntries }: DashboardProps) => {
                   strokeWidth="4"
                   strokeDasharray={`${birPct} 100`}
                   strokeDashoffset={`-${netPct + sssPct}`}
+                  pathLength="100"
                   className="transition-all duration-1000"
                 />
 
+                {/* Loans (Rose) */}
                 <circle
                   cx="16"
                   cy="16"
@@ -384,6 +394,7 @@ export const Dashboard = ({ employees, dtrEntries }: DashboardProps) => {
                   strokeWidth="4"
                   strokeDasharray={`${loanPct} 100`}
                   strokeDashoffset={`-${netPct + sssPct + birPct}`}
+                  pathLength="100"
                   className="transition-all duration-1000"
                 />
               </svg>

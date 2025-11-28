@@ -32,20 +32,15 @@ export const DTRManager = ({
       setError("All fields are required.");
       return;
     }
+
     if (timeIn === timeOut) {
       setError("Time In cannot be the same as Time Out.");
       return;
     }
+
     const duration = calculateHours(timeIn, timeOut);
     if (duration <= 0) {
       setError("Invalid time range. Duration must be greater than 0.");
-      return;
-    }
-    const exists = dtrEntries.some(
-      (e) => e.employeeId === empId && e.date === date
-    );
-    if (exists) {
-      setError("This employee already has a DTR entry for this date.");
       return;
     }
 
@@ -205,68 +200,71 @@ export const DTRManager = ({
             </button>
           )}
         </div>
-
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="p-4 text-sm font-semibold text-slate-600">
-                Employee
-              </th>
-              <th className="p-4 text-sm font-semibold text-slate-600">Date</th>
-              <th className="p-4 text-sm font-semibold text-slate-600">
-                Shift
-              </th>
-              <th className="p-4 text-sm font-semibold text-slate-600">
-                Total Hours
-              </th>
-              <th className="p-4 text-sm font-semibold text-slate-600 text-right">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredDTRs.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-500">
-                  No time logs found matching your filters.
-                </td>
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-max">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="p-4 text-sm font-semibold text-slate-600">
+                  Employee
+                </th>
+                <th className="p-4 text-sm font-semibold text-slate-600">
+                  Date
+                </th>
+                <th className="p-4 text-sm font-semibold text-slate-600">
+                  Shift
+                </th>
+                <th className="p-4 text-sm font-semibold text-slate-600">
+                  Total Hours
+                </th>
+                <th className="p-4 text-sm font-semibold text-slate-600 text-right">
+                  Actions
+                </th>
               </tr>
-            ) : (
-              filteredDTRs.map((entry) => {
-                const emp = employees.find((e) => e.id === entry.employeeId);
-                const hours = calculateHours(entry.timeIn, entry.timeOut);
-                return (
-                  <tr
-                    key={entry.id}
-                    className="border-b border-slate-100 hover:bg-slate-50"
-                  >
-                    <td className="p-4 font-medium text-slate-800">
-                      {emp?.name || "Unknown"}
-                    </td>
-                    <td className="p-4 text-slate-600">{entry.date}</td>
-                    <td className="p-4 text-slate-600 font-mono text-xs">
-                      <span className="bg-slate-100 px-2 py-1 rounded">
-                        {entry.timeIn} - {entry.timeOut}
-                      </span>
-                    </td>
-                    <td className="p-4 text-slate-800 font-semibold">
-                      {hours.toFixed(2)} hrs
-                    </td>
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={() => deleteDTR(entry.id)}
-                        className="text-rose-500 hover:text-rose-700 p-2 hover:bg-rose-50 rounded-lg transition-colors"
-                        title="Delete Log"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredDTRs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-slate-500">
+                    No time logs found matching your filters.
+                  </td>
+                </tr>
+              ) : (
+                filteredDTRs.map((entry) => {
+                  const emp = employees.find((e) => e.id === entry.employeeId);
+                  const hours = calculateHours(entry.timeIn, entry.timeOut);
+                  return (
+                    <tr
+                      key={entry.id}
+                      className="border-b border-slate-100 hover:bg-slate-50"
+                    >
+                      <td className="p-4 font-medium text-slate-800">
+                        {emp?.name || "Unknown"}
+                      </td>
+                      <td className="p-4 text-slate-600">{entry.date}</td>
+                      <td className="p-4 text-slate-600 font-mono text-xs">
+                        <span className="bg-slate-100 px-2 py-1 rounded">
+                          {entry.timeIn} - {entry.timeOut}
+                        </span>
+                      </td>
+                      <td className="p-4 text-slate-800 font-semibold">
+                        {hours.toFixed(2)} hrs
+                      </td>
+                      <td className="p-4 text-right">
+                        <button
+                          onClick={() => deleteDTR(entry.id)}
+                          className="text-rose-500 hover:text-rose-700 p-2 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Delete Log"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
