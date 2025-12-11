@@ -1,5 +1,5 @@
 import React from "react";
-import { formatCurrency } from "../../../utils/utils";
+import { formatCurrency } from "../../../../utils/utils";
 
 interface NetPaySummaryProps {
   netPay: number;

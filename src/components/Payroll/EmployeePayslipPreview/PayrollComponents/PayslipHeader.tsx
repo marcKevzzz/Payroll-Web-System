@@ -1,5 +1,5 @@
 import React from "react";
-import { Employee } from "../../../types/types";
+import { Employee } from "../../../../types/types";
 
 interface PayslipHeaderProps {
   employee: Employee;
@@ -14,7 +14,7 @@ const PayslipHeader: React.FC<PayslipHeaderProps> = ({ employee, month }) => {
           Payslip
         </h1>
         <p className="text-sm text-slate-500 font-medium mt-1">
-          PAYROLL PRO SYSTEM INC.
+          AeroStack co.
         </p>
       </div>
       <div className="text-right">

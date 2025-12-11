@@ -149,6 +149,7 @@ export default function EmployeeModal({
         position,
         hourly_rate: parsedRate,
         loan_amount: parsedLoan,
+        created_at: undefined,
       };
 
       if (editEmployee) onEdit(newEmp);

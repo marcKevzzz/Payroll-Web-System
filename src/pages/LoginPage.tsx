@@ -1,9 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
+import { Link } from "react-router-dom";
 
 const LoginPage: React.FC = () => {
-  const [employeeId, setEmployeeId] = useState("");
+  const [employee_id, setEmployeeId] = useState(
+    localStorage.getItem("rememberedEmployeeId") || ""
+  );
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(
+    !!localStorage.getItem("rememberedEmployeeId")
+  );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -11,18 +18,32 @@ const LoginPage: React.FC = () => {
 
   const handleLogin = async () => {
     setError("");
-    if (!employeeId || !password)
-      return setError("Please enter employee ID and password");
+    if (!employee_id || !password) {
+      return setError("Please enter both Employee ID and password.");
+    }
 
     setLoading(true);
     try {
-      await login(employeeId, password);
-      // redirect to dashboard or payroll page
+      await login(employee_id, password);
+
+      // Handle remember me
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmployeeId", employee_id);
+      } else {
+        localStorage.removeItem("rememberedEmployeeId");
+      }
+
+      // Redirect or show success message
     } catch (err: any) {
-      setError(err.message || "Login failed");
+      setError(err.response?.data?.message || err.message || "Login failed.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleLogin();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -33,8 +54,8 @@ const LoginPage: React.FC = () => {
     <div className="flex flex-col md:flex-row min-h-screen">
       {/* Left Side - Blue Section */}
       <div className="w-full md:w-1/2 bg-gradient-to-br from-blue-700 to-indigo-900 p-8 md:p-16 flex flex-col justify-between relative overflow-hidden min-h-[40vh] md:min-h-screen">
-        {/* Decorative grid pattern */}
-        <div className="absolute inset-0 opacity-10">
+        {/* Decorative grid */}
+        <div className="absolute inset-0 opacity-10 ">
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
@@ -50,41 +71,15 @@ const LoginPage: React.FC = () => {
           ))}
         </div>
 
-        <div className="relative z-10">
-          {/* Asterisk Icon */}
-          <div className="mb-6 md:mb-12">
-            <svg
-              width="60"
-              height="60"
-              viewBox="0 0 80 80"
-              fill="none"
-              className="md:w-20 md:h-20"
-            >
-              <path
-                d="M40 0L40 80M0 40L80 40M13.5 13.5L66.5 66.5M66.5 13.5L13.5 66.5"
-                stroke="white"
-                strokeWidth="8"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
-
-          {/* Heading */}
+        <div className="relative z-10 my-auto pb-16">
           <h1 className="text-4xl md:text-7xl font-bold text-white mb-4 md:mb-8 leading-tight">
-            Hello
-            <br />
-            AeroStack!👋
+            Hello<br />AeroStack!👋
           </h1>
-
-          {/* Description */}
           <p className="text-base md:text-xl text-white text-opacity-90 leading-relaxed max-w-lg">
-            Hello! Please log in to access your dashboard, check your payslips,
-            manage your details, and stay up-to-date with company updates. We’re
-            glad to have you on board!
+            Please log in to access your dashboard, check your payslips, manage your details, and stay up-to-date.
           </p>
         </div>
 
-        {/* Footer */}
         <p className="text-white text-opacity-70 relative z-10 text-sm md:text-base mt-8 md:mt-0">
           © 2025 AeroStack. All rights reserved.
         </p>
@@ -93,64 +88,77 @@ const LoginPage: React.FC = () => {
       {/* Right Side - Login Form */}
       <div className="w-full md:w-1/2 bg-gray-50 p-8 md:p-16 flex items-center justify-center">
         <div className="w-full max-w-md">
-          <h2 className="text-lg md:text-2xl font-bold text-indigo-700 mb-2">
-            AeroStack
-          </h2>
+          <h2 className="text-lg md:text-2xl font-bold text-indigo-700 mb-2">AeroStack</h2>
+          <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Welcome</h3>
 
-          <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Welcome to Aerostack
-          </h3>
-          <div className="mt-8 md:mt-12">
-            <div>
-              {/* Email Input */}
-              <div className="mb-6">
-                <input
-                  type="text"
-                  value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="w-full px-4 py-3 border-b-2 border-gray-300 bg-transparent focus:border-blue-600 focus:outline-none text-gray-900"
-                  placeholder="Employee ID"
-                />
-              </div>
-
-              {/* Password Input */}
-              <div className="mb-8">
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="w-full px-4 py-3 border-b-2 border-gray-300 bg-transparent focus:border-blue-600 focus:outline-none text-gray-900"
-                  placeholder="Password"
-                />
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-                  {error}
-                </div>
-              )}
-
-              {/* Login Button */}
-              <button
-                onClick={handleLogin}
-                disabled={loading}
-                className="w-full bg-indigo-600 text-white py-3 mt-2 rounded-lg font-semibold hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-4"
-              >
-                {loading ? "Loading..." : "Login Now"}
-              </button>
-
-              {/* Forget Password Link */}
-              <div className="text-center mt-6">
-                <span className="text-gray-500">Forget password </span>
-                <button className="text-gray-900 font-semibold underline hover:text-gray-700">
-                  Click here
-                </button>
-              </div>
+          <form onSubmit={handleSubmit} className="mt-8 md:mt-12">
+            {/* Employee ID */}
+            <div className="mb-6">
+              <input
+                type="text"
+                value={employee_id}
+                onChange={(e) => setEmployeeId(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="w-full px-4 py-3 border-b-2 border-gray-300 bg-transparent focus:border-blue-600 focus:outline-none text-gray-900"
+                placeholder="Employee ID"
+              />
             </div>
-          </div>
+
+            {/* Password */}
+            <div className="mb-4 relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="w-full px-4 py-3 border-b-2 border-gray-300 bg-transparent focus:border-blue-600 focus:outline-none text-gray-900 pr-12"
+                placeholder="Password"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-3 text-gray-500 text-sm"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+
+            {/* Remember Me */}
+            <div className="mb-4 flex items-center">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={() => setRememberMe(!rememberMe)}
+                id="rememberMe"
+                className="mr-2"
+              />
+              <label htmlFor="rememberMe" className="text-sm text-gray-700">
+                Remember Me
+              </label>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">{error}</div>
+            )}
+
+            {/* Login Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 text-white py-3 mt-2 rounded-lg font-semibold hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+            >
+              {loading ? "Loading..." : "Login Now"}
+            </button>
+
+            {/* Forgot Password */}
+            <div className="text-center mt-6">
+              <span className="text-gray-500">Forgot password? </span>
+              <Link to="/change-password" className="text-gray-900 font-semibold underline hover:text-gray-700" > 
+                Click here
+              </Link>
+            </div>
+          </form>
         </div>
       </div>
     </div>

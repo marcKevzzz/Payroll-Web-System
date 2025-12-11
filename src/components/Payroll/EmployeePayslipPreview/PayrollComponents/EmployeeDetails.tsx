@@ -1,13 +1,13 @@
 import React from "react";
-import { Employee } from "../../../types/types";
-import { formatCurrency, formatName } from "../../../utils/utils";
+import { Employee } from "../../../../types/types";
+import { formatCurrency, formatName } from "../../../../utils/utils";
 
 interface EmployeeDetailsProps {
   employee: Employee;
 }
 
 const EmployeeDetails: React.FC<EmployeeDetailsProps> = ({ employee }) => (
-  <div className="bg-slate-50 p-6 border-b border-slate-200">
+  <div className="p-6 border-b border-slate-200">
     <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-8">
       <div className="col-span-2">
         <span className="block text-xs font-bold text-slate-400 uppercase mb-1">

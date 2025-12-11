@@ -9,6 +9,7 @@ export interface Employee {
   position: string;
   hourly_rate: number;
   loan_amount: number; // The starting total balance of the loan
+  created_at: string;
 }
 
 export interface DTREntry {

@@ -29,6 +29,9 @@ export default function EmployeeTable({ employees, onDelete, onEdit }: Props) {
             <th className="py-4 px-3 text-left font-semibold text-slate-600">
               Financials
             </th>
+            <th className="py-4 px-3 text-left font-semibold text-slate-600">
+              Date Hired
+            </th>
             <th className="py-4 px-3 text-right font-semibold text-slate-600">
               Actions
             </th>
@@ -71,6 +74,9 @@ export default function EmployeeTable({ employees, onDelete, onEdit }: Props) {
                       Loan: {formatCurrency(emp.loan_amount)}
                     </div>
                   )}
+                </td>
+                <td className="py-4 px-3">
+                   <div className="text-xs text-slate-500">{new Date(emp.created_at).toLocaleDateString("en-CA")}</div>
                 </td>
 
                 <td className="py-4 px-3 text-right flex justify-end gap-2">

@@ -10,10 +10,10 @@ export const getDTR = async (_: Request, res: Response) => {
 };
 
 export const getEmployeeDTR = async (req: Request, res: Response) => {
-  const { employeeId } = req.params;
+  const { employee_id } = req.params;
   const [rows]: any = await pool.query(
     "SELECT d.employee_id, d.dtr_id, d.work_date, d.time_in, d.time_out, d.status FROM dtr d WHERE d.employee_id = ?",
-    [employeeId]
+    [employee_id]
   );
   res.json(rows);
 };

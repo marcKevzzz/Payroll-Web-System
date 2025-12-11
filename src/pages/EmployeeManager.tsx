@@ -117,35 +117,32 @@ export default function EmployeeManager({
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Header */}
-      <div className="flex justify-between items-center gap-4">
+      <div className="flex  lg:items-center items-start justify-between gap-3 lg:flex-row flex-col" >
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Users className="w-6 h-6" /> Employee Management
         </h2>
-
-        {/* Search */}
-        <div className="relative flex-1 max-w-sm ">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search employees..."
-            className="pl-9 pr-4 py-2 border rounded-lg w-full"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex gap-3 lg:max-w-lg w-full"> 
+          <div className="relative flex flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search employees..."
+              className="pl-9 pr-4 py-2 border rounded-lg w-full"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <button
+            onClick={() => {
+              setEditEmployee(null);
+              setShowModal(true);
+            }}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700"
+          >
+            <Plus className="w-4 h-4" /> Add Employee
+          </button>
         </div>
       </div>
-      <div className="flex justify-end">
-        <button
-          onClick={() => {
-            setEditEmployee(null);
-            setShowModal(true);
-          }}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
-        >
-          <Plus className="w-4 h-4" /> Add Employee
-        </button>
-      </div>
-
       {loading ? (
         <div>
           <Skeleton

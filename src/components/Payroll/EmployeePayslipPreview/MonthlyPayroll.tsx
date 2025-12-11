@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Employee, DTREntry } from "../../types/types";
+import { Employee, DTREntry } from "../../../types/types";
 import EmployeeSelector from "./PayrollComponents/EmployeeSelector";
 import PayslipHeader from "./PayrollComponents/PayslipHeader";
 import EmployeeDetails from "./PayrollComponents/EmployeeDetails";
@@ -10,8 +10,8 @@ import NotesSection from "./PayrollComponents/NotesSection";
 import {
   monthlyPayrollCalculation,
   allEmployeesMonthlyPayroll,
-} from "../../utils/monthlyPayrollCalculation"; // Move your useMemo logic here
-import * as PayrollService from "../../services/payroll";
+} from "../../../utils/monthlyPayrollCalculation"; // Move your useMemo logic here
+import * as PayrollService from "../../../services/payroll";
 import { useToast } from "@/src/context/ToastContext";
 import { useConfirm } from "@/src/context/ConfirmContext";
 

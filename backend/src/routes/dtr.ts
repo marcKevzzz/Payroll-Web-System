@@ -9,7 +9,7 @@ import {
 const router = Router();
 
 router.get("/", getDTR);
-router.get("/employee/:employeeId", getEmployeeDTR);
+router.get("/employee/:employee_id", getEmployeeDTR);
 router.post("/", addDTR);
 router.delete("/:dtr_id", deleteDTRLogs);
 

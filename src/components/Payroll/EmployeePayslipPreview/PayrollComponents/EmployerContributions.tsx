@@ -1,6 +1,6 @@
 import React from "react";
-import { PayrollResult } from "../../../types/types";
-import { formatCurrency } from "../../../utils/utils";
+import { PayrollResult } from "../../../../types/types";
+import { formatCurrency } from "../../../../utils/utils";
 
 interface EmployerContributionsProps {
   result: PayrollResult;

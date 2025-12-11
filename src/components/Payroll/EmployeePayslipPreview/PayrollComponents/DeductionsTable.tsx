@@ -1,6 +1,6 @@
 import React from "react";
-import { PayrollResult, Employee } from "../../../types/types";
-import { formatCurrency, getMinHourlyWage } from "../../../utils/utils";
+import { PayrollResult, Employee } from "../../../../types/types";
+import { formatCurrency, getMinHourlyWage } from "../../../../utils/utils";
 
 interface DeductionsTableProps {
   result: PayrollResult;

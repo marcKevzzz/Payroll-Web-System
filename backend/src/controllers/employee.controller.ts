@@ -2,18 +2,19 @@
 import { Request, Response } from "express";
 import pool from "../config/db";
 import bcrypt from "bcryptjs";
+import { promises } from "dns";
 
 // GET ALL EMPLOYEES
 export const getEmployees = async (_: Request, res: Response) => {
   const [rows]: any = await pool.query(
-    "SELECT e.employee_id, e.first_name, e.middle_name, e.last_name, e.email, e.phone, e.department, e.position, r.hourly_rate, l.loan_amount FROM employees e JOIN employee_rates r ON e.employee_id = r.employee_id LEFT JOIN loans l ON e.employee_id = l.employee_id"
+    "SELECT e.employee_id, e.first_name, e.middle_name, e.last_name, e.email, e.phone, e.department, e.position, e.created_at, r.hourly_rate, l.loan_amount FROM employees e JOIN employee_rates r ON e.employee_id = r.employee_id LEFT JOIN loans l ON e.employee_id = l.employee_id"
   );
   res.json(rows);
 };
 export const getEmployee = async (req: Request, res: Response) => {
   const { employee_id } = req.params;
   const [rows]: any = await pool.query(
-    "SELECT e.employee_id, e.first_name, e.middle_name, e.last_name, e.email, e.phone, e.department, e.position, r.hourly_rate, l.loan_amount FROM employees e JOIN employee_rates r ON e.employee_id = r.employee_id LEFT JOIN loans l ON e.employee_id = l.employee_id WHERE = e.employee_id = ?",
+    "SELECT e.employee_id, e.first_name, e.middle_name, e.last_name, e.email, e.phone, e.department, e.position, e.created_at, r.hourly_rate, l.loan_amount FROM employees e JOIN employee_rates r ON e.employee_id = r.employee_id LEFT JOIN loans l ON e.employee_id = l.employee_id WHERE = e.employee_id = ?",
     [employee_id]
   );
   res.json(rows);
@@ -31,18 +32,30 @@ export const generateNextEmployeeId = (latestId: string | null) => {
   return `${year}-${next.toString().padStart(4, "0")}`;
 };
 
-// CREATE EMPLOYEE
-export const createEmployee = async (req: Request, res: Response) => {
-  const emp = req.body;
+const determineRole = (position: string): string => {
+  const adminPositions = ["CEO", "COO", "CTO", "Executive Assistant"];
+  const hrPositions = ["HR Manager", "HR Officer"];
+  const financePositions = ["Finance Manager", "Accountant", "Bookkeeper"];
 
-  const hashedPassword = await bcrypt.hash(
-    `${emp.last_name}.${emp.first_name}${
-      emp.middle_name ? `.${emp.middle_name}` : ""
+  if (adminPositions.includes(position)) return "admin";
+  if (hrPositions.includes(position)) return "hr";
+  if (financePositions.includes(position)) return "finance";
+
+  return "employee";
+};
+
+const generateHashedPassword = async (employee_id: string, last_name: string): Promise<string> => {
+    return await bcrypt.hash(
+    `${employee_id}.${last_name.trim().replace(" ", "")}
     }`,
     10
   );
+}
 
-  console.log("Hashed Password:", hashedPassword);
+
+// CREATE EMPLOYEE
+export const createEmployee = async (req: Request, res: Response) => {
+  const emp = req.body;
 
   const [rows]: any = await pool.query(
     `SELECT employee_id
@@ -58,8 +71,8 @@ export const createEmployee = async (req: Request, res: Response) => {
   // Insert into employees
   await pool.query(
     `INSERT INTO employees 
-      (employee_id, first_name, middle_name, last_name, email, phone, department, position, password_hash)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (employee_id, first_name, middle_name, last_name, email, phone, department, position)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       newId,
       emp.first_name,
@@ -69,8 +82,15 @@ export const createEmployee = async (req: Request, res: Response) => {
       emp.phone,
       emp.department,
       emp.position,
-      hashedPassword,
     ]
+  );
+    const hashedPassword = await generateHashedPassword(newId, emp.last_name)
+    const role = determineRole(emp.position);
+
+    await pool.query(
+    `INSERT INTO users (employee_id, password_hash, role)
+     VALUES (?, ?, ?)`,
+    [newId, hashedPassword, role]
   );
 
   // Insert hourly rate

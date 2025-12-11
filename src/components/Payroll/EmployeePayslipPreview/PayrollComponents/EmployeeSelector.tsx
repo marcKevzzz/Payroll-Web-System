@@ -1,6 +1,6 @@
 import React from "react";
-import { Employee } from "../../../types/types";
-import { formatName } from "../../../utils/utils";
+import { Employee } from "../../../../types/types";
+import { formatName } from "../../../../utils/utils";
 
 interface EmployeeSelectorProps {
   employees: Employee[];
