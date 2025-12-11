@@ -11,14 +11,15 @@ import {
   ChevronUp,
   HelpCircle,
 } from "lucide-react";
-import { Employee, DTREntry } from "./types";
+import { Employee, DTREntry } from "./../types/types";
 import {
   calculateHours,
   formatCurrency,
   OT_MULTIPLIER,
   calculateSSS,
   calculateBIR,
-} from "./utils";
+  formatName,
+} from "./../utils/utils";
 
 interface DashboardProps {
   employees: Employee[];
@@ -133,10 +134,13 @@ export const Dashboard = ({ employees, dtrEntries }: DashboardProps) => {
     });
 
     return Array.from(hoursMap.entries())
-      .map(([id, hours]) => ({
-        name: employees.find((e) => e.id === id)?.name || "Unknown",
-        hours,
-      }))
+      .map(([id, hours]) => {
+        const emp = employees.find((e) => e.id === id);
+        return {
+          name: emp ? formatName(emp) : "Unknown",
+          hours,
+        };
+      })
       .sort((a, b) => b.hours - a.hours)
       .slice(0, 5); // Top 5
   }, [employees, dtrEntries]);
@@ -316,7 +320,7 @@ export const Dashboard = ({ employees, dtrEntries }: DashboardProps) => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <PieChart className="w-5 h-5 text-indigo-500" /> Payroll
