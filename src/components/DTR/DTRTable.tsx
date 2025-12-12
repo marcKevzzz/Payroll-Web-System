@@ -4,10 +4,10 @@ import { DTREntry, Employee } from "../../types/types";
 import { calculateHours, formatName } from "../../utils/utils";
 import * as DTRService from "../../services/dtr";
 import { useToast } from "../../context/ToastContext";
+import { useDTRContext } from "@/src/context/DTRContext";
 
 interface DTRTableProps {
   dtrEntries: DTREntry[];
-  setDtrEntries: (entries: DTREntry[]) => void;
   employees: Employee[];
   showConfirm: (options: {
     message: string;
@@ -17,16 +17,17 @@ interface DTRTableProps {
   filterEmp: string;
   filterMonth: string;
   loading: boolean;
+  fetchDTRLogs: () => void;
 }
 
 const DTRTable: React.FC<DTRTableProps> = ({
   dtrEntries,
-  setDtrEntries,
   employees,
   showConfirm,
   filterEmp,
   filterMonth,
   loading,
+  fetchDTRLogs,
 }) => {
   const filteredDTRs = dtrEntries
     .filter((entry) => {
@@ -51,11 +52,11 @@ const DTRTable: React.FC<DTRTableProps> = ({
   const deleteDTRLogs = async (dtr_id: string) => {
     try {
       await DTRService.deleteDTRLogs(dtr_id);
-      setDtrEntries(dtrEntries.filter((entry) => entry.dtr_id !== dtr_id));
-      showToast("success", "Employee deleted successfully");
+      showToast("success", "Log deleted successfully");
+      fetchDTRLogs();
     } catch (error) {
       console.error(error);
-      showToast("error", "Failed to delete employee");
+      showToast("error", "Failed to delete dtr log");
     }
   };
 

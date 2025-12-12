@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Save, AlertTriangle } from "lucide-react";
 import { DTREntry, Employee } from "../../types/types";
 import { calculateHours, formatName } from "../../utils/utils";
@@ -7,18 +7,19 @@ import * as DTRService from "../../services/dtr";
 interface Props {
   employees: Employee[];
   dtrEntries: DTREntry[];
-  setDtrEntries: (d: DTREntry[]) => void;
+  fetchDTRLogs: () => void;
   showToast: (type: string, message: string) => void;
 }
 
 const DTRForm: React.FC<Props> = ({
   employees,
   dtrEntries,
-  setDtrEntries,
+  fetchDTRLogs,
   showToast,
 }) => {
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
   const [empId, setEmpId] = useState("");
-  const [workDate, setWorkDate] = useState("");
+  const [workDate, setWorkDate] = useState(today);
   const [timeIn, setTimeIn] = useState("");
   const [timeOut, setTimeOut] = useState("");
   const [error, setError] = useState("");
@@ -29,6 +30,14 @@ const DTRForm: React.FC<Props> = ({
 
     if (!empId || !workDate || !timeIn || !timeOut) {
       setError("All fields are required.");
+      return;
+    }
+
+    // Prevent logging in future
+    const selectedDateTime = new Date(`${workDate}T${timeIn}`);
+    const now = new Date();
+    if (selectedDateTime > now) {
+      setError("You cannot log DTR for a future time.");
       return;
     }
 
@@ -66,12 +75,15 @@ const DTRForm: React.FC<Props> = ({
 
     try {
       await DTRService.addDTR(newEntry);
-      setDtrEntries([...dtrEntries, newEntry]);
+      fetchDTRLogs();
       showToast("success", "DTR added successfully");
     } catch {
       showToast("error", "Failed to add DTR");
     }
-    setWorkDate("");
+
+    // Reset form
+    setEmpId("");
+    setWorkDate(today);
     setTimeIn("");
     setTimeOut("");
   };
@@ -82,7 +94,7 @@ const DTRForm: React.FC<Props> = ({
         Log New Entry
       </h3>
       {error && (
-        <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg flex items-center gap-2">
+        <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg flex items-center gap-2 ">
           <AlertTriangle className="w-4 h-4" /> {error}
         </div>
       )}
@@ -115,6 +127,7 @@ const DTRForm: React.FC<Props> = ({
           <input
             type="date"
             value={workDate}
+            max={today} // cannot select future dates
             onChange={(e) => setWorkDate(e.target.value)}
             className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
             required

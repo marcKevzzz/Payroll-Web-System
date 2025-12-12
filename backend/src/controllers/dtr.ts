@@ -10,12 +10,13 @@ export const getDTR = async (_: Request, res: Response) => {
 };
 
 export const getEmployeeDTR = async (req: Request, res: Response) => {
-  const { employee_id } = req.params;
+  const { employee_id } = req.params; // 1. Extract the employee_id from the URL parameters.
   const [rows]: any = await pool.query(
+    // 2. Execute a parameterized SQL query to prevent SQL injection.
     "SELECT d.employee_id, d.dtr_id, d.work_date, d.time_in, d.time_out, d.status FROM dtr d WHERE d.employee_id = ?",
-    [employee_id]
+    [employee_id] // The employee_id is substituted into the '?' placeholder.
   );
-  res.json(rows);
+  res.json(rows); // 3. Send the retrieved DTR rows (an array of records) as a JSON response.
 };
 
 export const addDTR = async (req: Request, res: Response) => {

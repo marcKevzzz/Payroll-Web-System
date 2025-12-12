@@ -8,32 +8,52 @@ export const login = async (req: Request, res: Response) => {
   const { employee_id, password } = req.body; // matches frontend
 
   if (!employee_id || !password)
-    return res.status(400).json({ message: "Employee ID and password required" });
+    return res
+      .status(400)
+      .json({ message: "Employee ID and password required" });
 
   try {
     const [rows]: any = await pool.query(
-      "SELECT employee_id, password_hash, role FROM users WHERE employee_id = ?",
+      "SELECT employee_id, password_hash, role, created_at, must_change_password FROM users WHERE employee_id = ?",
       [employee_id]
     );
 
     if (!rows.length)
-      return res.status(400).json({ message: "Invalid employee ID or password" });
+      return res
+        .status(400)
+        .json({ message: "Invalid employee ID or password" });
 
     const user = rows[0];
     const valid = await bcrypt.compare(password, user.password_hash);
 
     if (!valid)
-      return res.status(400).json({ message: "Invalid employee ID or password" });
+      return res
+        .status(400)
+        .json({ message: "Invalid employee ID or password" });
 
-    const token = jwt.sign({ employee_id: user.employee_id, role: user.role }, process.env.JWT_SECRET!, { expiresIn: "1h" });
+    await pool.query(`UPDATE users SET last_login = ? WHERE user_id = ?`, [
+      new Date(),
+      user.user_id,
+    ]);
 
-    res.json({ token, employee_id: user.employee_id, role: user.role });
+    const token = jwt.sign(
+      { employee_id: user.employee_id, role: user.role },
+      process.env.JWT_SECRET!,
+      { expiresIn: "1h" }
+    );
+
+    res.json({
+      token,
+      employee_id: user.employee_id,
+      role: user.role,
+      mustChangePassword: user.must_change_password === 1,
+      created_at: user.created_at,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 export const changePassword = async (req: AuthRequest, res: Response) => {
   const { currentPassword, newPassword } = req.body;

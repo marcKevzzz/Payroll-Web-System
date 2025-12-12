@@ -7,10 +7,7 @@ import EarningsTable from "./PayrollComponents/EarningsTable";
 import DeductionsTable from "./PayrollComponents/DeductionsTable";
 import NetPaySummary from "./PayrollComponents/NetPaySummary";
 import NotesSection from "./PayrollComponents/NotesSection";
-import {
-  monthlyPayrollCalculation,
-  allEmployeesMonthlyPayroll,
-} from "../../../utils/monthlyPayrollCalculation"; // Move your useMemo logic here
+import { monthlyPayrollCalculation } from "../../../utils/monthlyPayrollCalculation"; // Move your useMemo logic here
 import * as PayrollService from "../../../services/payroll";
 import { useToast } from "@/src/context/ToastContext";
 import { useConfirm } from "@/src/context/ConfirmContext";
@@ -49,25 +46,6 @@ export const MonthlyPayroll = ({
 
   const result = monthlyCalculation.result;
 
-  const generateAllPayslips = async () => {
-    const allResults = allEmployeesMonthlyPayroll(month, employees, dtrEntries);
-    try {
-      const data = await PayrollService.generateAllPayslips(allResults);
-      showToast("success", "Payslips generate successfully.");
-    } catch (error) {
-      console.log(error);
-      showToast("error", "Failed to generate payslips.");
-    }
-  };
-
-  const handleClick = () => {
-    showConfirm({
-      message: "Are you sure you want to generate all payslips?",
-      type: "warning",
-      onConfirm: () => generateAllPayslips(),
-    });
-  };
-
   return (
     <div className="animate-fadeIn">
       <EmployeeSelector
@@ -76,7 +54,6 @@ export const MonthlyPayroll = ({
         setSelectedEmp={setSelectedEmp}
         month={month || ""}
         setMonth={setMonth}
-        onClick={handleClick}
       />
       {monthlyCalculation.hasRecords && monthlyCalculation.result ? (
         <>

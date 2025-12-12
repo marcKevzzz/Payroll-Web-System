@@ -14,7 +14,7 @@ export const getEmployees = async (_: Request, res: Response) => {
 export const getEmployee = async (req: Request, res: Response) => {
   const { employee_id } = req.params;
   const [rows]: any = await pool.query(
-    "SELECT e.employee_id, e.first_name, e.middle_name, e.last_name, e.email, e.phone, e.department, e.position, e.created_at, r.hourly_rate, l.loan_amount FROM employees e JOIN employee_rates r ON e.employee_id = r.employee_id LEFT JOIN loans l ON e.employee_id = l.employee_id WHERE = e.employee_id = ?",
+    "SELECT e.employee_id, e.first_name, e.middle_name, e.last_name, e.email, e.phone, e.department, e.position, e.created_at, r.hourly_rate, l.loan_amount FROM employees e JOIN employee_rates r ON e.employee_id = r.employee_id LEFT JOIN loans l ON e.employee_id = l.employee_id WHERE e.employee_id = ?",
     [employee_id]
   );
   res.json(rows);
@@ -44,14 +44,16 @@ const determineRole = (position: string): string => {
   return "employee";
 };
 
-const generateHashedPassword = async (employee_id: string, last_name: string): Promise<string> => {
-    return await bcrypt.hash(
+const generateHashedPassword = async (
+  employee_id: string,
+  last_name: string
+): Promise<string> => {
+  return await bcrypt.hash(
     `${employee_id}.${last_name.trim().replace(" ", "")}
     }`,
     10
   );
-}
-
+};
 
 // CREATE EMPLOYEE
 export const createEmployee = async (req: Request, res: Response) => {
@@ -84,10 +86,10 @@ export const createEmployee = async (req: Request, res: Response) => {
       emp.position,
     ]
   );
-    const hashedPassword = await generateHashedPassword(newId, emp.last_name)
-    const role = determineRole(emp.position);
+  const hashedPassword = await generateHashedPassword(newId, emp.last_name);
+  const role = determineRole(emp.position);
 
-    await pool.query(
+  await pool.query(
     `INSERT INTO users (employee_id, password_hash, role)
      VALUES (?, ?, ?)`,
     [newId, hashedPassword, role]

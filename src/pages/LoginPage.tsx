@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useToast } from "../context/ToastContext";
 
 const LoginPage: React.FC = () => {
-  const [employee_id, setEmployeeId] = useState(
+  const [employeeId, setEmployeeId] = useState(
     localStorage.getItem("rememberedEmployeeId") || ""
   );
   const [password, setPassword] = useState("");
@@ -14,32 +15,55 @@ const LoginPage: React.FC = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, role, employee_id, mustChangePassword, isAuthorized } =
+    useAuth();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const handleLogin = async () => {
     setError("");
-    if (!employee_id || !password) {
+    if (!employeeId || !password) {
       return setError("Please enter both Employee ID and password.");
     }
 
     setLoading(true);
     try {
-      await login(employee_id, password);
+      const result = await login(employeeId, password);
+      // result contains the updated authenticated user
 
-      // Handle remember me
+      // Remember Me
       if (rememberMe) {
-        localStorage.setItem("rememberedEmployeeId", employee_id);
+        localStorage.setItem("rememberedEmployeeId", employeeId);
       } else {
         localStorage.removeItem("rememberedEmployeeId");
       }
 
-      // Redirect or show success message
+      if (mustChangePassword) {
+        showToast(
+          "warning",
+          "Your password was system-generated. Please change it immediately."
+        );
+        navigate("/change-password");
+        return;
+      }
+
+      // Role-based redirect
+      if (role === "admin") navigate("admin/dashboard");
+      else if (role === "hr") navigate("admin/dashboard");
+      else navigate(`employee/${employee_id}`);
+      showToast("success", "Login successfully.");
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || "Login failed.");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isAuthorized && (role === "hr" || role === "admin"))
+      navigate("admin/dashboard");
+    else if (role === "employee") navigate(`employee/${employee_id}`);
+  }, [role, isAuthorized]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,10 +97,13 @@ const LoginPage: React.FC = () => {
 
         <div className="relative z-10 my-auto pb-16">
           <h1 className="text-4xl md:text-7xl font-bold text-white mb-4 md:mb-8 leading-tight">
-            Hello<br />AeroStack!👋
+            Hello
+            <br />
+            AeroStack!👋
           </h1>
           <p className="text-base md:text-xl text-white text-opacity-90 leading-relaxed max-w-lg">
-            Please log in to access your dashboard, check your payslips, manage your details, and stay up-to-date.
+            Please log in to access your dashboard, check your payslips, manage
+            your details, and stay up-to-date.
           </p>
         </div>
 
@@ -88,15 +115,19 @@ const LoginPage: React.FC = () => {
       {/* Right Side - Login Form */}
       <div className="w-full md:w-1/2 bg-gray-50 p-8 md:p-16 flex items-center justify-center">
         <div className="w-full max-w-md">
-          <h2 className="text-lg md:text-2xl font-bold text-indigo-700 mb-2">AeroStack</h2>
-          <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Welcome</h3>
+          <h2 className="text-lg md:text-2xl font-bold text-indigo-700 mb-2">
+            AeroStack
+          </h2>
+          <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Welcome
+          </h3>
 
           <form onSubmit={handleSubmit} className="mt-8 md:mt-12">
             {/* Employee ID */}
             <div className="mb-6">
               <input
                 type="text"
-                value={employee_id}
+                value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 onKeyPress={handleKeyPress}
                 className="w-full px-4 py-3 border-b-2 border-gray-300 bg-transparent focus:border-blue-600 focus:outline-none text-gray-900"
@@ -139,7 +170,9 @@ const LoginPage: React.FC = () => {
 
             {/* Error Message */}
             {error && (
-              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">{error}</div>
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                {error}
+              </div>
             )}
 
             {/* Login Button */}
@@ -154,7 +187,10 @@ const LoginPage: React.FC = () => {
             {/* Forgot Password */}
             <div className="text-center mt-6">
               <span className="text-gray-500">Forgot password? </span>
-              <Link to="/change-password" className="text-gray-900 font-semibold underline hover:text-gray-700" > 
+              <Link
+                to="/change-password"
+                className="text-gray-900 font-semibold underline hover:text-gray-700"
+              >
                 Click here
               </Link>
             </div>

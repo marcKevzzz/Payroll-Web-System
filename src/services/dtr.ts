@@ -7,6 +7,14 @@ export const getDTR = async (): Promise<DTREntry[]> => {
   const res = await axios.get<DTREntry[]>(API_URL);
   return res.data;
 };
+
+export const getDTRByEmployeeId = async (
+  employee_id: string
+): Promise<DTREntry[]> => {
+  const res = await axios.get<DTREntry[]>(`${API_URL}/employee/${employee_id}`);
+  return res.data;
+};
+
 export const addDTR = async (dtr: DTREntry) => {
   return axios.post(API_URL, dtr);
 };

@@ -125,7 +125,11 @@ export const monthlyPayrollCalculation = (
     : 0;
 
   const netPay = netBeforeLoan - loanDeduction;
-
+  console.log("Calculating payroll for:", employeeId);
+  console.log("Month:", month);
+  console.log("DTR entries:", empDTR);
+  console.log("Processed hours:", processed);
+  console.log("Gross pay:", grossPay);
   return {
     result: {
       employee_id: employee.employee_id,
@@ -180,10 +184,7 @@ export const allEmployeesMonthlyPayroll = (
       employees,
       dtrEntries
     );
-
-    if (calc.hasRecords && calc.result) {
-      results.push(calc.result);
-    }
+    if (calc.hasRecords && calc.result) results.push(calc.result);
   });
 
   return results;

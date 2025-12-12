@@ -76,7 +76,9 @@ export default function EmployeeTable({ employees, onDelete, onEdit }: Props) {
                   )}
                 </td>
                 <td className="py-4 px-3">
-                   <div className="text-xs text-slate-500">{new Date(emp.created_at).toLocaleDateString("en-CA")}</div>
+                  <div className="text-xs text-slate-500">
+                    {new Date(emp.created_at).toLocaleDateString("en-CA")}
+                  </div>
                 </td>
 
                 <td className="py-4 px-3 text-right flex justify-end gap-2">

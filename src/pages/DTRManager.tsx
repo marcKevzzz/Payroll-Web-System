@@ -12,16 +12,16 @@ import DTRTable from "./../components/DTR/DTRTable";
 export const DTRManager = () => {
   const { employees } = useEmployeeContext();
   const { DTREntries, fetchDTRLogs, loading } = useDTRContext();
+  const dtrEntries = DTREntries;
   const { showToast } = useToast();
   const { showConfirm } = useConfirm();
 
-  const [dtrEntries, setDTREntries] = useState(DTREntries);
   const [filterEmp, setFilterEmp] = useState("");
   const [filterMonth, setFilterMonth] = useState("");
 
   useEffect(() => {
-    setDTREntries(DTREntries);
-  }, [DTREntries]);
+    fetchDTRLogs();
+  }, []);
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -32,7 +32,7 @@ export const DTRManager = () => {
       <DTRForm
         employees={employees}
         dtrEntries={dtrEntries}
-        setDtrEntries={setDTREntries}
+        fetchDTRLogs={fetchDTRLogs}
         showToast={showToast}
       />
 
@@ -47,11 +47,12 @@ export const DTRManager = () => {
       <DTRTable
         employees={employees}
         dtrEntries={dtrEntries}
-        setDtrEntries={setDTREntries}
+        setDtrEntries={() => fetchDTRLogs()}
         showConfirm={showConfirm}
         filterEmp={filterEmp}
         filterMonth={filterMonth}
         loading={loading}
+        fetchDTRLogs={fetchDTRLogs}
       />
     </div>
   );

@@ -53,10 +53,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <h1 className="text-xl font-bold text-white">AeroStack Co.</h1>
         </div>
         <nav className="space-y-2">
-          <NavItem to="/dashboard" label="Dashboard" icon={LayoutDashboard} />
-          <NavItem to="/employees" label="Employees" icon={Users} />
-          <NavItem to="/dtr" label="DTR Logs" icon={Clock} />
-          <NavItem to="/payroll" label="Payroll" icon={Calculator} />
+          <NavItem
+            to="/admin/dashboard"
+            label="Dashboard"
+            icon={LayoutDashboard}
+          />
+          <NavItem to="/admin/employees" label="Employees" icon={Users} />
+          <NavItem to="/admin/dtr" label="DTR Logs" icon={Clock} />
+          <NavItem to="/admin/payroll" label="Payroll" icon={Calculator} />
         </nav>
       </div>
       <div className="absolute bottom-0 w-full p-6 text-slate-500 text-xs text-center border-t border-slate-800">

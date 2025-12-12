@@ -8,7 +8,6 @@ interface EmployeeSelectorProps {
   setSelectedEmp: (val: string) => void;
   month: string;
   setMonth: (val: string) => void;
-  onClick: () => void;
 }
 
 const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
@@ -17,7 +16,6 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
   setSelectedEmp,
   month,
   setMonth,
-  onClick,
 }) => {
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6">
@@ -50,12 +48,6 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
             className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
           />
         </div>
-        <button
-          onClick={onClick}
-          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg flex self-end justify-center gap-2 transition-colors"
-        >
-          Generate All Payslips
-        </button>
       </div>
     </div>
   );

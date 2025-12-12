@@ -9,18 +9,9 @@ import { useEmployeeContext } from "../context/EmployeeContext";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useConfirm } from "../context/ConfirmContext";
+import { useAuth } from "../hooks/useAuth";
 
-interface Props {
-  dtrEntries: DTREntry[];
-  setDtrEntries: React.Dispatch<React.SetStateAction<DTREntry[]>>;
-  setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
-}
-
-export default function EmployeeManager({
-  dtrEntries,
-  setDtrEntries,
-  setEmployees,
-}: Props) {
+export default function EmployeeManager() {
   const { employees, fetchEmployees, loading } = useEmployeeContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -28,14 +19,14 @@ export default function EmployeeManager({
   const { showToast } = useToast();
   const { showConfirm } = useConfirm();
 
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
   // Add employee
   const addEmployee = async (emp: Employee) => {
     try {
-      const created = await EmployeeService.createEmployee(emp);
-
-      // Update global list immediately
-      setEmployees((prev) => [...prev, created]);
-
+      await EmployeeService.createEmployee(emp);
       showToast("success", "Employee added successfully");
       fetchEmployees();
     } catch (error) {
@@ -48,10 +39,6 @@ export default function EmployeeManager({
   const updateEmployee = async (emp: Employee) => {
     try {
       await EmployeeService.updateEmployee(emp.employee_id, emp);
-      // Update global list
-      setEmployees((prev) =>
-        prev.map((e) => (e.employee_id === emp.employee_id ? emp : e))
-      );
       showToast("success", "Employee updated successfully");
       fetchEmployees();
     } catch (error) {
@@ -64,13 +51,6 @@ export default function EmployeeManager({
   const deleteEmployee = async (employee_id: string) => {
     try {
       await EmployeeService.deleteEmployee(employee_id);
-
-      // Remove from global list
-      setEmployees((prev) => prev.filter((e) => e.employee_id !== employee_id));
-
-      // Remove employee's DTR
-      setDtrEntries((prev) => prev.filter((d) => d.employeeId !== employee_id));
-
       showToast("success", "Employee deleted successfully");
       fetchEmployees();
     } catch (error) {
@@ -106,7 +86,7 @@ export default function EmployeeManager({
     });
   };
 
-  const filtered = (employees || []).filter((e) =>
+  const filtered = employees.filter((e) =>
     `${e.employee_id} ${e.first_name} ${e.last_name} ${e.position} ${e.department}`
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
@@ -117,11 +97,11 @@ export default function EmployeeManager({
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Header */}
-      <div className="flex  lg:items-center items-start justify-between gap-3 lg:flex-row flex-col" >
+      <div className="flex  lg:items-center items-start justify-between gap-3 lg:flex-row flex-col">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Users className="w-6 h-6" /> Employee Management
         </h2>
-        <div className="flex gap-3 lg:max-w-lg w-full"> 
+        <div className="flex gap-3 lg:max-w-lg w-full">
           <div className="relative flex flex-1">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
