@@ -14,7 +14,7 @@ export const login = async (req: Request, res: Response) => {
 
   try {
     const [rows]: any = await pool.query(
-      "SELECT employee_id, password_hash, role, created_at, must_change_password FROM users WHERE employee_id = ?",
+      "SELECT employee_id, password_hash, role, created_at, must_change_password, status FROM users WHERE employee_id = ?",
       [employee_id]
     );
 
@@ -31,9 +31,9 @@ export const login = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: "Invalid employee ID or password" });
 
-    await pool.query(`UPDATE users SET last_login = ? WHERE user_id = ?`, [
+    await pool.query(`UPDATE users SET last_login = ? WHERE employee_id = ?`, [
       new Date(),
-      user.user_id,
+      user.employee_id,
     ]);
 
     const token = jwt.sign(
@@ -48,6 +48,7 @@ export const login = async (req: Request, res: Response) => {
       role: user.role,
       mustChangePassword: user.must_change_password === 1,
       created_at: user.created_at,
+      status: user.status,
     });
   } catch (err) {
     console.error(err);

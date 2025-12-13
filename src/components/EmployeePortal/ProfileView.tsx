@@ -4,7 +4,7 @@ import React from "react";
 import { Edit } from "lucide-react";
 import { useEmployeeContext } from "@/src/context/EmployeeContext";
 import { Employee } from "@/src/types/types";
-
+import { formatDate } from "@/src/utils/utils";
 interface ProfileViewProps {
   editMode: boolean;
   setEditMode: (value: boolean) => void;
@@ -27,80 +27,121 @@ const ProfileView: React.FC<ProfileViewProps> = ({
         </div>
         <button
           onClick={() => setEditMode(!editMode)}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition text-sm"
+          disabled={true}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition text-sm "
         >
           <Edit className="w-4 h-4" />
           {editMode ? "Cancel" : "Edit Profile"}
         </button>
       </div>
       <div className="p-8">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              First Name
-            </label>
-            <input
-              type="text"
-              value={employee.first_name}
-              disabled={!editMode}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-slate-50 disabled:text-slate-500"
-            />
+        <div className="grid  gap-2">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Employee ID
+              </label>
+              <input
+                type="text"
+                value={employee.employee_id}
+                disabled
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 text-slate-500 font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Worked Hired
+              </label>
+              <input
+                type="text"
+                value={formatDate(employee.created_at)}
+                disabled
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 text-slate-500 font-mono"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Last Name
-            </label>
-            <input
-              type="text"
-              value={employee.last_name}
-              disabled={!editMode}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-slate-50 disabled:text-slate-500"
-            />
+          <div className="grid md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                First Name
+              </label>
+              <input
+                type="text"
+                value={employee.first_name}
+                disabled={!editMode}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-slate-50 disabled:text-slate-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Middle Name
+              </label>
+              <input
+                type="text"
+                value={employee.middle_name || ""}
+                disabled={!editMode}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-slate-50 disabled:text-slate-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Last Name
+              </label>
+              <input
+                type="text"
+                value={employee.last_name}
+                disabled={!editMode}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-slate-50 disabled:text-slate-500"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              value={employee.email}
-              disabled={!editMode}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-slate-50 disabled:text-slate-500"
-            />
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                value={employee.email}
+                disabled={!editMode}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-slate-50 disabled:text-slate-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Phone
+              </label>
+              <input
+                type="tel"
+                value={employee.phone}
+                disabled={!editMode}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-slate-50 disabled:text-slate-500"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Phone
-            </label>
-            <input
-              type="tel"
-              value={employee.phone}
-              disabled={!editMode}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-slate-50 disabled:text-slate-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Position
-            </label>
-            <input
-              type="text"
-              value={employee.position}
-              disabled
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 text-slate-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Employee ID
-            </label>
-            <input
-              type="text"
-              value={employee.employee_id}
-              disabled
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 text-slate-500 font-mono"
-            />
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Position
+              </label>
+              <input
+                type="text"
+                value={employee.position}
+                disabled
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 text-slate-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Department
+              </label>
+              <input
+                type="text"
+                value={employee.department}
+                disabled
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 text-slate-500"
+              />
+            </div>
           </div>
         </div>
         {editMode && (

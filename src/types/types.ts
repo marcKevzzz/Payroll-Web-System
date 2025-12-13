@@ -12,10 +12,30 @@ export interface Employee {
   created_at: string;
 }
 
+export interface LeaveType {
+  type_id?: number;
+  type_name: string;
+}
+
+export interface LeaveRequest {
+  request_id?: number;
+  employee_id: string;
+  leave_type_id: number;
+  type_name: string;
+  start_date: string; // YYYY-MM-DD
+  end_date: string; // YYYY-MM-DD
+  total_days: number;
+  reason?: string;
+  status?: "Pending" | "Approved" | "Rejected" | "Cancelled";
+  approver_id?: string | null;
+  approval_date?: string | null;
+  rejection_reason?: string | null;
+}
+
 export interface DTREntry {
   dtr_id: string;
   employee_id: string;
-  work_date: String; // YYYY-MM-DD
+  work_date: string; // YYYY-MM-DD
   time_in: string; // HH:mm format
   time_out: string; // HH:mm format
   status: "Present" | "Absent" | "Leave";
@@ -24,7 +44,7 @@ export interface DTREntry {
 export interface HolidayBreakdown {
   date: string;
   name: string;
-  type: "Regular" | "Special Non-Working" | "Special Working";
+  type: HolidayClassification;
   hours: number;
   pay: number;
 }
@@ -38,6 +58,8 @@ export interface PayrollResult {
   overtime_hours: number;
   gross_pay: number;
   net_pay: number;
+  nsd_hours: number;
+  positionBenefit: number;
 
   sssDeduction: number;
   philHealthDeduction: number;
@@ -45,5 +67,28 @@ export interface PayrollResult {
   birTax: number;
   loanDeduction: number;
 
+  holiday_unworked_pay: number;
+
+  paid_leave_days: number;
+  paid_leave_pay: number;
+
   holidayBreakdowns: HolidayBreakdown[];
+}
+export type HolidayClassification =
+  | "Regular"
+  | "Special Non-Working"
+  | "Special";
+
+export interface ProcessedDTR {
+  regularHours: number;
+  overtimeHours: number;
+  regularHolidayHours: number;
+  specialHolidayHours: number;
+  nsdHours: number; // New
+  regularPay: number;
+  overtimePay: number;
+  regularHolidayPay: number;
+  specialHolidayPay: number;
+  nsdPay: number; // New
+  lastWorkDate: string;
 }

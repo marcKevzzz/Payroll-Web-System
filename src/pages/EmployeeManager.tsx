@@ -50,12 +50,12 @@ export default function EmployeeManager() {
   // Delete employee
   const deleteEmployee = async (employee_id: string) => {
     try {
-      await EmployeeService.deleteEmployee(employee_id);
-      showToast("success", "Employee deleted successfully");
+      await EmployeeService.terminateEmployee(employee_id);
+      showToast("success", "Employee terminated successfully");
       fetchEmployees();
     } catch (error) {
       console.error(error);
-      showToast("error", "Failed to delete employee");
+      showToast("error", "Failed to terminate employee");
     } finally {
       setEditEmployee(null);
     }
@@ -80,7 +80,7 @@ export default function EmployeeManager() {
 
   const handleDeleteConfirm = (id: string) => {
     showConfirm({
-      message: "Are you sure you want to delete this employee?",
+      message: "Are you sure you want to terminate this employee?",
       type: "danger",
       onConfirm: () => deleteEmployee(id),
     });
@@ -93,9 +93,10 @@ export default function EmployeeManager() {
   );
 
   // if (loading) return <div>Loading employees...</div>;
+  const existingEmails = employees.map((emp) => emp.email);
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn max-h-full">
       {/* Header */}
       <div className="flex  lg:items-center items-start justify-between gap-3 lg:flex-row flex-col">
         <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -154,6 +155,7 @@ export default function EmployeeManager() {
         onSave={handleAddConfirm}
         onEdit={handleEditConfirm}
         editEmployee={editEmployee}
+        existingEmails={existingEmails}
       />
     </div>
   );

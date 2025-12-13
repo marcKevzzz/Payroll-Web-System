@@ -18,8 +18,8 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
   setMonth,
 }) => {
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
             Select Employee
@@ -32,7 +32,7 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
             <option value="">-- Choose Employee --</option>
             {employees.map((e) => (
               <option key={e.employee_id} value={e.employee_id}>
-                {formatName(e)}
+                {`${formatName(e)} (${e.employee_id})`}
               </option>
             ))}
           </select>

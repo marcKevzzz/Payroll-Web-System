@@ -15,8 +15,7 @@ const LoginPage: React.FC = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { login, role, employee_id, mustChangePassword, isAuthorized } =
-    useAuth();
+  const { login, mustChangePassword } = useAuth(); // Removed role and employee_id from destructuring here
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -28,29 +27,42 @@ const LoginPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const result = await login(employeeId, password);
-      // result contains the updated authenticated user
+      // Capture the successful user data returned by the login service
+      const authData = await login(employeeId, password);
 
-      // Remember Me
+      // Use the DEFINITIVE role and employee_id from the login result
+      const {
+        role,
+        employee_id,
+        mustChangePassword: shouldChangePassword,
+      } = authData; // Remember Me
+
       if (rememberMe) {
         localStorage.setItem("rememberedEmployeeId", employeeId);
       } else {
         localStorage.removeItem("rememberedEmployeeId");
       }
 
-      if (mustChangePassword) {
+      if (shouldChangePassword) {
         showToast(
           "warning",
           "Your password was system-generated. Please change it immediately."
         );
         navigate("/change-password");
         return;
+      } // Role-based redirect using the definitive 'role' and 'employee_id' from authData
+
+      if (role === "admin" || role === "hr" || role === "finance") {
+        navigate("/admin/dashboard"); // Navigate to absolute path for clarity
+      } else if (role === "employee") {
+        navigate(`/employee/${employee_id}`); // Navigate to absolute path
+      } else {
+        // Should only happen if login succeeded but role is still missing/invalid
+        showToast("error", "Login successful but user role is undefined.");
+        navigate("/unauthorized");
+        return;
       }
 
-      // Role-based redirect
-      if (role === "admin") navigate("admin/dashboard");
-      else if (role === "hr") navigate("admin/dashboard");
-      else navigate(`employee/${employee_id}`);
       showToast("success", "Login successfully.");
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || "Login failed.");
@@ -59,11 +71,12 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (isAuthorized && (role === "hr" || role === "admin"))
-      navigate("admin/dashboard");
-    else if (role === "employee") navigate(`employee/${employee_id}`);
-  }, [role, isAuthorized]);
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     if (role === "hr" || role === "admin") navigate("admin/dashboard");
+  //     else if (role === "employee") navigate(`employee/${employee_id}`);
+  //   }
+  // }, [role, isAuthenticated, employee_id, navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

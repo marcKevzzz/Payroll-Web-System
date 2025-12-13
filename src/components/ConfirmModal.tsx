@@ -1,5 +1,11 @@
 import React from "react";
-import { CheckCircle, XCircle, AlertTriangle, Info } from "lucide-react";
+import {
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Info,
+  LogOut,
+} from "lucide-react";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -15,6 +21,7 @@ const iconMap = {
   warning: { icon: AlertTriangle, color: "text-yellow-500" },
   info: { icon: Info, color: "text-blue-500" },
   danger: { icon: XCircle, color: "text-red-500" },
+  leave: { icon: LogOut, color: "text-red-500" },
 };
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({

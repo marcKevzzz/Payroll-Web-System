@@ -5,11 +5,12 @@ import { User, FileText, Calendar, Clock, LogOut, Loader2 } from "lucide-react";
 // import { mockEmployee } from "../utils/mockData";
 import { useEmployeeContext } from "@/src/context/EmployeeContext";
 import { DTREntry, Employee } from "@/src/types/types";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useDTRContext } from "@/src/context/DTRContext";
+import { useConfirm } from "@/src/context/ConfirmContext";
+import { useLeaveRequestContext } from "@/src/context/LeaveRequestContext";
+import { useAuth } from "@/src/hooks/useAuth";
 
-// --- 1. Dynamic Imports (Code Splitting) ---
-// These components will be loaded only when needed.
 const PayslipView = lazy(
   () => import("../../components/EmployeePortal/PayslipView")
 );
@@ -31,66 +32,42 @@ const LoadingFallback = () => (
 const EmployeePortal = () => {
   const { employee_id } = useParams();
   const { employees, fetchEmployeeById } = useEmployeeContext();
-  const { DTREntries, fetchEmployeeDTRLogs } = useDTRContext();
+  const {
+    employeeDTREntries, // <-- This holds the fetched data
+    fetchEmployeeDTRLogs,
+    employeeLoading,
+  } = useDTRContext();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [activeTab, setActiveTab] = useState("payslip");
-  const [leaveForm, setLeaveForm] = useState({
-    type: "Vacation Leave",
-    start: "",
-    end: "",
-    reason: "",
-  });
+
   const [editMode, setEditMode] = useState(false);
+  const { showConfirm } = useConfirm();
+  const navigate = useNavigate();
+  const { leaveRequests } = useLeaveRequestContext();
+  const { employee_id: empId } = useAuth();
+
+  useEffect(() => {
+    if (empId !== employee_id) {
+      navigate("/login");
+      return;
+    }
+  }, []);
 
   useEffect(() => {
     const loadEmployee = async () => {
       if (!employee_id) return;
-      await fetchEmployeeById(employee_id);
-      setEmployee(employees);
+      const emp = await fetchEmployeeById(employee_id);
+
+      setEmployee(emp);
     };
     loadEmployee();
   }, [employee_id, fetchEmployeeById]);
 
   useEffect(() => {
-    if (employee?.employee_id) {
-      fetchEmployeeDTRLogs(employee.employee_id);
+    if (employee_id) {
+      fetchEmployeeDTRLogs(employee_id);
     }
-  }, [employee, fetchEmployeeDTRLogs]);
-
-  const dtr = [
-    {
-      employee_id: "25-0002",
-      dtr_id: 1,
-      work_date: "2025-12-11T16:00:00.000Z",
-      time_in: "14:50:00",
-      time_out: "19:50:00",
-      status: "Present",
-    },
-    {
-      employee_id: "25-0002",
-      dtr_id: 3,
-      work_date: "2025-12-08T16:00:00.000Z",
-      time_in: "15:00:00",
-      time_out: "19:00:00",
-      status: "Present",
-    },
-    {
-      employee_id: "25-0002",
-      dtr_id: 7,
-      work_date: "2025-12-12T16:00:00.000Z",
-      time_in: "13:23:00",
-      time_out: "20:24:00",
-      status: "Present",
-    },
-    {
-      employee_id: "25-0002",
-      dtr_id: 9,
-      work_date: "2025-12-09T16:00:00.000Z",
-      time_in: "14:52:00",
-      time_out: "20:53:00",
-      status: "Present",
-    },
-  ];
+  }, [employee_id, fetchEmployeeDTRLogs]);
 
   const tabs = [
     { id: "payslip", label: "My Payslips", icon: FileText },
@@ -99,7 +76,13 @@ const EmployeePortal = () => {
     { id: "profile", label: "My Profile", icon: User },
   ];
 
-  console.log(dtr);
+  const handleLogout = () => {
+    showConfirm({
+      message: "Are you sure you want to logout?",
+      type: "leave",
+      onConfirm: () => navigate("/logout"),
+    });
+  };
 
   const renderContent = () => {
     try {
@@ -107,17 +90,19 @@ const EmployeePortal = () => {
         case "payslip":
           return employee ? (
             <Suspense fallback={<LoadingFallback />}>
-              <PayslipView employee={employee} dtrEntries={dtr} />
+              <PayslipView
+                employee={employee}
+                dtrEntries={employeeDTREntries}
+                leaveRequests={leaveRequests}
+              />
             </Suspense>
           ) : (
             <LoadingFallback />
           );
         case "dtr":
-          return <DTRView dtrEntries={dtr} />;
+          return <DTRView dtrEntries={employeeDTREntries} />;
         case "leave":
-          return (
-            <LeaveView leaveForm={leaveForm} setLeaveForm={setLeaveForm} />
-          );
+          return <LeaveView employee={employees} employee_id={employee_id} />;
         case "profile":
           return (
             <ProfileView
@@ -130,37 +115,37 @@ const EmployeePortal = () => {
           return null;
       }
     } catch (err) {
-      console.error(
-        "Error rendering content:",
-        err,
-        JSON.stringify({ employee, DTREntries }, null, 2) // Explicitly stringify the context object
-      );
       return <div>Error rendering content</div>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-slate-50 p-2 md:p-6 ">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-6 mb-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900">
+              <div>AeroStack Co.</div>
+              <h1 className="text-2xl font-bold text-slate-900">
                 Employee Portal
               </h1>
-              <p className="text-slate-500 mt-1">
-                Welcome back, {employee?.first_name || "Employee"}!
-              </p>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition">
-              <LogOut className="w-4 h-4" />
-              <span className="font-medium">Logout</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <p className="text-md text-slate-500 ">
+                {`${employee?.first_name} ${employee?.last_name}` || "Employee"}
+              </p>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="font-medium">Logout</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 mb-6">
           <div className="flex overflow-x-auto">
             {tabs.map((tab) => {
@@ -169,7 +154,7 @@ const EmployeePortal = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-4 font-medium border-b-2 transition whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-2 md:px-6 py-4 font-medium border-b-2 transition whitespace-nowrap ${
                     activeTab === tab.id
                       ? "border-indigo-600 text-indigo-600"
                       : "border-transparent text-slate-500 hover:text-slate-700"

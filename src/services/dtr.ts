@@ -23,7 +23,3 @@ export const deleteDTRLogs = async (dtr_id: string) => {
   return axios.delete(`${API_URL}/${dtr_id}`);
 };
 
-// export const getEmployeeDTR = async (employee_id: string) => {
-//   const res = await axios.get<DTREntry[]>(`${API_URL}/employee/${employee_id}`);
-//   return res.data;
-// };

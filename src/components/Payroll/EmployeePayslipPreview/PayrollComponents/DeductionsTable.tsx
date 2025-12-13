@@ -19,7 +19,7 @@ const DeductionsTable: React.FC<DeductionsTableProps> = ({
     result.philHealthDeduction +
     result.birTax +
     result?.loanDeduction;
-  const isMWE = employee.hourly_rate <= getMinHourlyWage();
+  const isMWE = result.hourly_rate <= getMinHourlyWage();
   return (
     <div>
       <h4 className="text-xs font-bold text-slate-900 uppercase tracking-widest border-b-2 border-slate-800 pb-2 mb-4">

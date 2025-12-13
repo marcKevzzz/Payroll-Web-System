@@ -10,29 +10,29 @@ interface Props {
 
 export default function EmployeeTable({ employees, onDelete, onEdit }: Props) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-      <table className="w-full text-sm">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-auto">
+      <table className="w-full text-sm min-w-[600px]">
         <thead>
-          <tr className="bg-slate-50 border-b ">
-            <th className="py-4 px-3 text-right font-semibold text-slate-600">
+          <tr className="bg-slate-50 border-b">
+            <th className="py-3 px-2 text-right font-semibold text-slate-600">
               ID
             </th>
-            <th className="py-4 px-3 text-left font-semibold text-slate-600">
+            <th className="py-3 text-left font-semibold text-slate-600">
               Employee
             </th>
-            <th className="py-4 px-3 text-left font-semibold text-slate-600">
-              Contacts
-            </th>
-            <th className="py-4 px-3 text-left font-semibold text-slate-600">
-              Role
-            </th>
-            <th className="py-4 px-3 text-left font-semibold text-slate-600">
-              Financials
-            </th>
-            <th className="py-4 px-3 text-left font-semibold text-slate-600">
+            <th className="py-3 px-2 text-left font-semibold text-slate-600">
               Date Hired
             </th>
-            <th className="py-4 px-3 text-right font-semibold text-slate-600">
+            <th className="py-3  text-left font-semibold text-slate-600">
+              Contacts
+            </th>
+            <th className="py-3 px-2 text-left font-semibold text-slate-600">
+              Role
+            </th>
+            <th className="py-3 px-2 text-left font-semibold text-slate-600">
+              Financials
+            </th>
+            <th className="py-3 px-2 text-right font-semibold text-slate-600">
               Actions
             </th>
           </tr>
@@ -41,47 +41,50 @@ export default function EmployeeTable({ employees, onDelete, onEdit }: Props) {
         <tbody>
           {employees.length === 0 ? (
             <tr>
-              <td colSpan={6} className="p-8 text-center text-slate-500">
+              <td colSpan={7} className="p-6 text-center text-slate-500">
                 No employees found.
               </td>
             </tr>
           ) : (
             employees.map((emp) => (
-              <tr key={emp.employee_id} className="border-b hover:bg-slate-50">
-                <td className="py-4 px-3 text-right font-semibold">
-                  <div className="text-xs ">{emp.employee_id}</div>
+              <tr
+                key={emp.employee_id}
+                className="whitespace-nowrap border-b hover:bg-slate-50"
+              >
+                <td className="py-3 px-2 text-right font-semibold">
+                  <div className="text-xs">{emp.employee_id}</div>
                 </td>
 
-                <td className="py-4 px-3">
+                <td className="py-3">
                   <div className="font-semibold">{formatName(emp)}</div>
                 </td>
-                <td className="py-4 px-3">
-                  <div className="text-xs text-slate-500">{emp.phone}</div>
-                  <div className="text-xs text-slate-500">{emp.email}</div>
+
+                <td className="py-3 px-2 text-xs text-slate-500">
+                  {new Date(emp.created_at).toLocaleDateString("en-CA")}
                 </td>
 
-                <td className="py-4 px-3">
-                  <div>{emp.position}</div>
-                  <div className="text-xs bg-slate-100 inline-block px-2 rounded">
+                <td className="py-3 text-xs text-slate-500 space-y-0.5">
+                  <div>{emp.phone}</div>
+                  <div>{emp.email}</div>
+                </td>
+
+                <td className="py-3 ">
+                  <div className="truncate">{emp.position}</div>
+                  <div className="text-xs bg-slate-100 inline-block px-1 rounded mt-1 truncate">
                     {emp.department}
                   </div>
                 </td>
 
-                <td className="py-4 px-3">
+                <td className="py-3  text-xs">
                   {formatCurrency(emp.hourly_rate)}/hr
                   {emp.loan_amount > 0 && (
-                    <div className="text-xs text-rose-600">
+                    <div className="text-rose-600">
                       Loan: {formatCurrency(emp.loan_amount)}
                     </div>
                   )}
                 </td>
-                <td className="py-4 px-3">
-                  <div className="text-xs text-slate-500">
-                    {new Date(emp.created_at).toLocaleDateString("en-CA")}
-                  </div>
-                </td>
 
-                <td className="py-4 px-3 text-right flex justify-end gap-2">
+                <td className="py-3 px-2 text-right flex justify-end gap-2">
                   <button
                     onClick={() => onEdit(emp.employee_id)}
                     className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded-lg transition"

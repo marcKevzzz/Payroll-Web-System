@@ -1,6 +1,12 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Clock, Calculator } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Clock,
+  Calculator,
+  ClipboardList,
+} from "lucide-react";
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -59,12 +65,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             icon={LayoutDashboard}
           />
           <NavItem to="/admin/employees" label="Employees" icon={Users} />
+          <NavItem
+            to="/admin/leave-requests"
+            label="Leave Requests"
+            icon={ClipboardList}
+          />
           <NavItem to="/admin/dtr" label="DTR Logs" icon={Clock} />
           <NavItem to="/admin/payroll" label="Payroll" icon={Calculator} />
         </nav>
       </div>
       <div className="absolute bottom-0 w-full p-6 text-slate-500 text-xs text-center border-t border-slate-800">
-        &copy; 2025 PayrollPro System
+        &copy; 2025 AeroStack Co.
       </div>
     </aside>
   );

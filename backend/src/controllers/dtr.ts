@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 
 export const getDTR = async (_: Request, res: Response) => {
   const [rows]: any = await pool.query(
-    "SELECT d.employee_id, d.dtr_id, d.work_date, d.time_in, d.time_out, d.status FROM dtr d"
+    "SELECT d.employee_id, d.dtr_id, d.work_date, d.time_in, d.time_out, d.status, e.status FROM dtr d JOIN employees e ON e.employee_id = d.employee_id WHERE e.status='active'"
   );
   res.json(rows);
 };
@@ -13,7 +13,7 @@ export const getEmployeeDTR = async (req: Request, res: Response) => {
   const { employee_id } = req.params; // 1. Extract the employee_id from the URL parameters.
   const [rows]: any = await pool.query(
     // 2. Execute a parameterized SQL query to prevent SQL injection.
-    "SELECT d.employee_id, d.dtr_id, d.work_date, d.time_in, d.time_out, d.status FROM dtr d WHERE d.employee_id = ?",
+    "SELECT d.employee_id, d.dtr_id, d.work_date, d.time_in, d.time_out, d.status, e.status FROM dtr d JOIN employees e ON e.employee_id = d.employee_id WHERE d.employee_id = ? AND e.status='active'",
     [employee_id] // The employee_id is substituted into the '?' placeholder.
   );
   res.json(rows); // 3. Send the retrieved DTR rows (an array of records) as a JSON response.

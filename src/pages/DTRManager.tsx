@@ -10,8 +10,8 @@ import DTRFilter from "./../components/DTR/DTRFilter";
 import DTRTable from "./../components/DTR/DTRTable";
 
 export const DTRManager = () => {
-  const { employees } = useEmployeeContext();
-  const { DTREntries, fetchDTRLogs, loading } = useDTRContext();
+  const { employees, fetchEmployees } = useEmployeeContext();
+  const { DTREntries, fetchAllDTRLogs, loading } = useDTRContext();
   const dtrEntries = DTREntries;
   const { showToast } = useToast();
   const { showConfirm } = useConfirm();
@@ -20,7 +20,8 @@ export const DTRManager = () => {
   const [filterMonth, setFilterMonth] = useState("");
 
   useEffect(() => {
-    fetchDTRLogs();
+    fetchAllDTRLogs();
+    fetchEmployees();
   }, []);
 
   return (
@@ -32,7 +33,7 @@ export const DTRManager = () => {
       <DTRForm
         employees={employees}
         dtrEntries={dtrEntries}
-        fetchDTRLogs={fetchDTRLogs}
+        fetchDTRLogs={fetchAllDTRLogs}
         showToast={showToast}
       />
 
@@ -47,12 +48,12 @@ export const DTRManager = () => {
       <DTRTable
         employees={employees}
         dtrEntries={dtrEntries}
-        setDtrEntries={() => fetchDTRLogs()}
+        setDtrEntries={() => fetchAllDTRLogs()}
         showConfirm={showConfirm}
         filterEmp={filterEmp}
         filterMonth={filterMonth}
         loading={loading}
-        fetchDTRLogs={fetchDTRLogs}
+        fetchDTRLogs={fetchAllDTRLogs}
       />
     </div>
   );

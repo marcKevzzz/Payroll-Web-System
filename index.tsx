@@ -17,7 +17,8 @@ import LoginPage from "./src/pages/LoginPage";
 import ChangePassword from "./src/pages/ChangePassword";
 import EmployeePortal from "./src/pages/EmployeeDashboard/EmployeePortal";
 import UnauthorizedPage from "./src/pages/UnauthorizedPage";
-import { Dashboard } from "./src/pages/Dashboard";
+import AdminHrDashboard from "./src/pages/AdminHrDashboard";
+import LeaveRequests from "./src/pages/LeaveRequests";
 
 import { EmployeeProvider } from "./src/context/EmployeeContext";
 import { DTRProvider } from "./src/context/DTRContext";
@@ -25,14 +26,11 @@ import { ToastProvider } from "./src/context/ToastContext";
 import { AuthProvider } from "./src/context/AuthContext";
 import { ConfirmProvider } from "./src/context/ConfirmContext";
 import ProtectedRoute from "./src/components/ProtectedRoute";
+import { LeaveRequestProvider } from "./src/context/LeaveRequestContext";
 
-import { Employee, DTREntry } from "./src/types/types";
 import Logout from "./src/pages/Logout";
 
 const AppContent: React.FC = () => {
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [dtrEntries, setDtrEntries] = useState<DTREntry[]>([]);
-
   return (
     <Router>
       <Routes>
@@ -46,7 +44,7 @@ const AppContent: React.FC = () => {
         <Route
           path="/employee/:employee_id"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["employee", "admin"]}>
               <EmployeePortal />
             </ProtectedRoute>
           }
@@ -61,22 +59,12 @@ const AppContent: React.FC = () => {
             </ProtectedRoute>
           }
         >
-          <Route
-            path="dashboard"
-            element={
-              <Dashboard employees={employees} dtrEntries={dtrEntries} />
-            }
-          />
+          <Route path="dashboard" element={<AdminHrDashboard />} />
 
-          <Route
-            path="employees"
-            element={<EmployeeManager setEmployees={setEmployees} />}
-          />
+          <Route path="employees" element={<EmployeeManager />} />
+          <Route path="leave-requests" element={<LeaveRequests />} />
 
-          <Route
-            path="dtr"
-            element={<DTRManager setDtrEntries={setDtrEntries} />}
-          />
+          <Route path="dtr" element={<DTRManager />} />
 
           <Route path="payroll" element={<PayrollCalculator />} />
 
@@ -86,7 +74,7 @@ const AppContent: React.FC = () => {
 
         {/* Global fallback for ANY unknown route */}
         {/* Fallback for any unknown route */}
-        <Route path="/*" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
       </Routes>
     </Router>
   );
@@ -95,15 +83,17 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <EmployeeProvider>
-      <DTRProvider>
-        <ToastProvider>
-          <AuthProvider>
-            <ConfirmProvider>
-              <AppContent />
-            </ConfirmProvider>
-          </AuthProvider>
-        </ToastProvider>
-      </DTRProvider>
+      <LeaveRequestProvider>
+        <DTRProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <ConfirmProvider>
+                <AppContent />
+              </ConfirmProvider>
+            </AuthProvider>
+          </ToastProvider>
+        </DTRProvider>
+      </LeaveRequestProvider>
     </EmployeeProvider>
   );
 };

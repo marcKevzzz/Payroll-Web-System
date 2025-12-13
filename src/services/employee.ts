@@ -22,6 +22,9 @@ export const createEmployee = async (emp: Employee) => {
 export const updateEmployee = async (employee_id: string, emp: Employee) => {
   return axios.put(`${API_URL}/${employee_id}`, emp);
 };
+export const terminateEmployee = async (employee_id: string) => {
+  return axios.put(`${API_URL}/terminate/${employee_id}`);
+};
 
 export const deleteEmployee = async (employee_id: string) => {
   return axios.delete(`${API_URL}/${employee_id}`);

@@ -7,14 +7,14 @@ import { promises } from "dns";
 // GET ALL EMPLOYEES
 export const getEmployees = async (_: Request, res: Response) => {
   const [rows]: any = await pool.query(
-    "SELECT e.employee_id, e.first_name, e.middle_name, e.last_name, e.email, e.phone, e.department, e.position, e.created_at, r.hourly_rate, l.loan_amount FROM employees e JOIN employee_rates r ON e.employee_id = r.employee_id LEFT JOIN loans l ON e.employee_id = l.employee_id"
+    "SELECT e.employee_id, e.first_name, e.middle_name, e.last_name, e.email, e.phone, e.department, e.position, e.status, e.created_at, r.hourly_rate, l.loan_amount FROM employees e JOIN employee_rates r ON e.employee_id = r.employee_id LEFT JOIN loans l ON e.employee_id = l.employee_id WHERE e.status = 'active'"
   );
   res.json(rows);
 };
 export const getEmployee = async (req: Request, res: Response) => {
   const { employee_id } = req.params;
   const [rows]: any = await pool.query(
-    "SELECT e.employee_id, e.first_name, e.middle_name, e.last_name, e.email, e.phone, e.department, e.position, e.created_at, r.hourly_rate, l.loan_amount FROM employees e JOIN employee_rates r ON e.employee_id = r.employee_id LEFT JOIN loans l ON e.employee_id = l.employee_id WHERE e.employee_id = ?",
+    "SELECT e.employee_id, e.first_name, e.middle_name, e.last_name, e.email, e.phone, e.department, e.position, e.created_at, r.hourly_rate, l.loan_amount FROM employees e JOIN employee_rates r ON e.employee_id = r.employee_id LEFT JOIN loans l ON e.employee_id = l.employee_id WHERE e.employee_id = ? AND e.status='active'",
     [employee_id]
   );
   res.json(rows);
@@ -146,6 +146,19 @@ export const updateEmployee = async (req: Request, res: Response) => {
        VALUES (?, ?, 'active')`,
       [employee_id, emp.loan_amount]
     ));
+
+  res.json({ message: "Employee updated" });
+};
+export const terminateEmployee = async (req: Request, res: Response) => {
+  const { employee_id } = req.params;
+  const emp = req.body;
+
+  await pool.query(
+    `UPDATE employees SET
+     status=?
+     WHERE employee_id=?`,
+    ["terminate", employee_id]
+  );
 
   res.json({ message: "Employee updated" });
 };
