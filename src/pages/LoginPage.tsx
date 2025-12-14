@@ -197,16 +197,17 @@ const LoginPage: React.FC = () => {
               {loading ? "Loading..." : "Login Now"}
             </button>
 
+        
             {/* Forgot Password */}
-            <div className="text-center mt-6">
-              <span className="text-gray-500">Forgot password? </span>
-              <Link
-                to="/change-password"
-                className="text-gray-900 font-semibold underline hover:text-gray-700"
-              >
-                Click here
-              </Link>
-            </div>
+            <div className="text-center mt-6">
+              <span className="text-gray-500">Forgot password? </span>
+              <Link
+                to="/forgot-password" // <-- CORRECTED LINK
+                className="text-gray-900 font-semibold underline hover:text-gray-700"
+              >
+                Click here
+              </Link>
+            </div>
           </form>
         </div>
       </div>

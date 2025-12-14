@@ -221,6 +221,7 @@ export const calculateSingleEmployeeMonthlyPayroll = async (
     ? Math.min(employee.loan_amount, netBeforeLoan * 0.25)
     : 0;
 
+
   // --- 7. FINAL NET PAY ---
   const netPay = netBeforeLoan - loanDeduction;
   return {
@@ -250,7 +251,7 @@ export const calculateSingleEmployeeMonthlyPayroll = async (
           name: getHolidayName(processed.lastWorkDate),
           type:
             getHolidayData(processed.lastWorkDate)?.type ??
-            ("Regular" as HolidayClassification),
+            ("Regular"),
           hours: processed.regularHolidayHours + processed.specialHolidayHours,
           pay: processed.regularHolidayPay + processed.specialHolidayPay,
         },

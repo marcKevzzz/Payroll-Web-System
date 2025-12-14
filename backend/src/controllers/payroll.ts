@@ -226,22 +226,19 @@ export const getDTR = async (req: Request, res: Response) => {
   );
 
   // 3. Holiday breakdowns
-
-  const [holidays]: any = await pool.query(
-    `SELECT holiday_date, holiday_name, holiday_type, holiday_hours, holiday_pay
-
-     FROM holidays
-
-     WHERE payroll_id = ?`,
-
+const [holidays]: any = await pool.query(
+    `SELECT
+         h.holiday_date, h.holiday_name, h.holiday_type,
+         eh.holiday_hours, eh.holiday_pay
+     FROM employee_holiday_pay eh
+     JOIN holidays h ON eh.holiday_id = h.holiday_id
+     WHERE eh.payroll_id = ?`, // <<< JOIN to get the correct holiday data
     [payroll_id]
   );
 
   res.json({
     ...payroll[0],
-
     deductions,
-
     holidays,
   });
 };
@@ -317,28 +314,66 @@ async function deleteExistingChildRecords(conn: any, payrollId: number) {
 
 // (The insertDeductions and insertHolidayBreakdowns functions remain the same
 //  as they are only concerned with inserting NEW records.)
+async function insertDeductions(conn: any, payrollId: number, payroll: PayrollDTO) {
+    
+    // We can filter out deductions that are zero or null to keep the table clean
+    const deductionRecords = [
+        { type: 'SSS', amount: payroll.sssDeduction },
+        { type: 'PhilHealth', amount: payroll.philHealthDeduction },
+        { type: 'PagIbig', amount: payroll.pagIbigDeduction },
+        { type: 'BIR Tax', amount: payroll.birTax },
+        { type: 'Loan', amount: payroll.loanDeduction },
+        // ... any other deductions
+    ].filter(d => d.amount && d.amount > 0);
 
-async function insertDeductions(
-  conn: any,
-  payrollId: number,
-  payroll: PayrollDTO
-) {
-  const deductions = [
-    { type: "SSS", amount: payroll.sssDeduction },
-    { type: "PhilHealth", amount: payroll.philHealthDeduction },
-    { type: "PagIbig", amount: payroll.pagIbigDeduction },
-    { type: "BIR", amount: payroll.birTax },
-    { type: "Loan", amount: payroll.loanDeduction },
-  ];
+    if (deductionRecords.length === 0) {
+        return;
+    }
 
-  for (const d of deductions) {
-    await conn.query(
-      `INSERT INTO payroll_deductions (payroll_id, deduction_type, deduction_amount)
-       VALUES (?, ?, ?)`,
-      [payrollId, d.type, d.amount]
-    );
-  }
+    const valuePlaceholders = deductionRecords.map(() => '(?, ?, ?)').join(', ');
+    
+    // Flatten the array for the query parameters: [payrollId, 'SSS', 427.5, payrollId, 'PH', 250.0, ...]
+    const values = deductionRecords.flatMap(d => [payrollId, d.type, d.amount]);
+
+    // Construct the final, clean SQL query using a standard template literal
+    const sql = `
+        INSERT INTO payroll_deductions (payroll_id, deduction_type, deduction_amount)
+        VALUES ${valuePlaceholders}
+    `;
+    
+    // Execute the bulk insert
+    await conn.query(sql, values);
 }
+
+async function getOrCreateHolidayId(
+  conn: any,
+  holidayDate: string,
+  holidayName: string,
+  holidayType: string
+): Promise<number> {
+  // 1. Check if the holiday already exists by date
+  const [existingHoliday]: any = await conn.query(
+    `SELECT holiday_id FROM holidays WHERE holiday_date = ?`,
+    [holidayDate]
+  );
+
+  if (existingHoliday.length > 0) {
+    // If found, return the existing ID
+    return existingHoliday[0].holiday_id;
+  }
+
+  // 2. If not found, insert the new holiday record
+  const [insertResult]: any = await conn.query(
+    `INSERT INTO holidays (holiday_date, holiday_name, holiday_type) 
+     VALUES (?, ?, ?)`,
+    [holidayDate, holidayName, holidayType]
+  );
+
+  // 3. Return the new ID
+  return insertResult.insertId;
+}
+
+// --- UPDATED MAIN FUNCTION ---
 async function insertHolidayBreakdowns(
   conn: any,
   payrollId: number,
@@ -347,34 +382,30 @@ async function insertHolidayBreakdowns(
   if (!breakdowns) return;
 
   for (const h of breakdowns) {
-    // If holiday name is missing or hours/pay are zero, skip insertion for safety
+    // Skip records that are not holidays AND have no hours/pay
     if (!h.name && h.hours === 0 && h.pay === 0) {
       continue;
     }
 
-    // Use 'Unknown Holiday' if h.name is null, and convert date to YYYY-MM-DD string
     const holidayDate = h.date.split("T")[0];
     const holidayName = h.name || "Unidentified Holiday";
-    // UPSERT into holidays table (as previously fixed)
-    await conn.query(
-      `
-      INSERT INTO holidays (holiday_date, holiday_name, holiday_type) 
-      VALUES (?, ?, ?)
-      ON DUPLICATE KEY UPDATE 
-        holiday_id = LAST_INSERT_ID(holiday_id),
-        holiday_name = VALUES(holiday_name),
-        holiday_type = VALUES(holiday_type);
-      `,
-      [holidayDate, holidayName, h.type]
-    ); // Get the ID
+    // NOTE: If h.type is undefined in the breakdown, it defaults to 'Regular' in the mock data,
+    // but in a real system, it should use a consistent default.
+    const holidayType = h.type || "Special Non-Working"; 
 
-    const [idResult]: any = await conn.query(`SELECT LAST_INSERT_ID() as id;`);
-    const holidayId = idResult[0].id; // Insert into employee_holiday_pay table
+    // ** 1. Get the single, existing or newly created holiday_id **
+    const holidayId = await getOrCreateHolidayId(
+      conn,
+      holidayDate,
+      holidayName,
+      holidayType
+    );
 
+    // ** 2. Insert into employee_holiday_pay using the verified ID **
     await conn.query(
       `INSERT INTO employee_holiday_pay
-        (payroll_id, holiday_id, holiday_hours, holiday_pay)
-        VALUES (?, ?, ?, ?)`,
+         (payroll_id, holiday_id, holiday_hours, holiday_pay)
+         VALUES (?, ?, ?, ?)`,
       [payrollId, holidayId, h.hours, h.pay]
     );
   }
@@ -391,7 +422,7 @@ async function processLoanPayment(
 
   // Step 1: Find the employee's active loan
   const [activeLoans]: any = await conn.query(
-    `SELECT loan_id, balance FROM loans WHERE employee_id = ? AND status = 'Active' LIMIT 1`,
+    `SELECT loan_id, loan_amount FROM loans WHERE employee_id = ? AND status = 'active' LIMIT 1`,
     [employeeId]
   );
 
@@ -405,9 +436,9 @@ async function processLoanPayment(
     return; // Safely exit this payment process
   }
 
-  const { loan_id, balance } = activeLoans[0]; // Now safe to destructure
+  const { loan_id, loan_amount } = activeLoans[0]; // Now safe to destructure
   const paymentAmount = deductionAmount;
-  const newBalance = balance - paymentAmount;
+  const newBalance = loan_amount - paymentAmount;
 
   // Step 2: Record the payment in the loan_payments table
   await conn.query(
@@ -418,11 +449,11 @@ async function processLoanPayment(
   );
 
   // Step 3: Update the loan balance and status
-  const newStatus = newBalance <= 0.01 ? "Paid" : "Active";
+  const newStatus = newBalance <= 0.01 ? "paid" : "active";
   const finalBalance = newBalance < 0 ? 0 : newBalance;
 
   await conn.query(
-    `UPDATE loans SET balance = ?, status = ? WHERE loan_id = ?`,
+    `UPDATE loans SET loan_amount = ?, status = ? WHERE loan_id = ?`,
     [finalBalance, newStatus, loan_id]
   );
 }
@@ -430,29 +461,46 @@ async function processLoanPayment(
 // Controller: Save All Payroll (Refactored)
 // -------------------------
 export const saveAllPayroll = async (req: Request, res: Response) => {
-  const payrolls: PayrollDTO[] = req.body;
+  let payrolls: PayrollDTO[] = req.body;
+
+  // 1. CRITICAL: Handle the case where the body is null/undefined
+  if (!payrolls) {
+    return res.status(400).json({ error: "Request body is empty." });
+  }
+
+  // 2. DEFENSIVE CHECK: Ensure the data is an array
+  if (!Array.isArray(payrolls)) {
+    // If it's not an array, but is an object (e.g., {data: [...]}), try to find the array within it.
+    if (typeof payrolls === 'object' && payrolls !== null && 'data' in payrolls && Array.isArray((payrolls as any).data)) {
+        payrolls = (payrolls as any).data;
+    } else {
+        // If it's still not an array, stop and throw an error.
+        return res.status(400).json({ error: "Data is not in a bulk array format. Expected: [...]" });
+    }
+  }
 
   const conn = await pool.getConnection();
   await conn.beginTransaction();
 
   try {
-    for (const payroll of payrolls) {
+    for (const payroll of payrolls) { // <--- Now safe to iterate
       // 1. UPSERT the main payroll record and get the ID (new or existing)
-      const payrollId = await upsertPayroll(conn, payroll); // 2. IMPORTANT: DELETE existing child records for the given payrollId
+      const payrollId = await upsertPayroll(conn, payroll); 
 
-      await deleteExistingChildRecords(conn, payrollId); // 3. INSERT the NEW child records (Deductions and Holidays)
+      // 2. IMPORTANT: DELETE existing child records for the given payrollId
+      await deleteExistingChildRecords(conn, payrollId); 
 
+      // 3. INSERT the NEW child records (Deductions and Holidays)
       await insertDeductions(conn, payrollId, payroll);
       await insertHolidayBreakdowns(conn, payrollId, payroll.holidayBreakdowns);
 
       // 4. NEW STEP: Process Loan Payment
-      // This MUST happen AFTER the payrollId is established and the loan deduction amount is known.
       await processLoanPayment(
         conn,
         payrollId,
         payroll.employee_id,
         payroll.loanDeduction,
-        payroll.pay_period_end // Use pay period end as the payment date
+        payroll.pay_period_end 
       );
     }
 
@@ -463,9 +511,8 @@ export const saveAllPayroll = async (req: Request, res: Response) => {
   } catch (err) {
     await conn.rollback();
     console.error(err);
-    res
-      .status(500)
-      .json({ error: "Failed to save payroll and process loans: " + err });
+    // Be careful not to include sensitive error details in the final message
+    res.status(500).json({ error: "Failed to save payroll and process loans: " + (err as Error).message });
   } finally {
     conn.release();
   }

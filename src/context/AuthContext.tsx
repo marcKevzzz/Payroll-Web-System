@@ -78,11 +78,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [mustChangePassword, setMustChangePassword] = useState(
     localStorage.getItem("mustChangePassword") === "true"
-  ); // Check authentication status only once after initial render
+  ); 
 
   useEffect(() => {
-    // If the token exists, we can consider the user potentially authenticated immediately.
-    // Set to false as soon as local storage is checked.
     setIsCheckingAuth(false);
   }, []); // DERIVED STATE: Calculate role from token whenever the token changes
 
@@ -99,7 +97,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const decoded = jwtDecode<DecodedToken>(token);
 
-        // Check for token expiration (optional, but good practice)
         if (decoded.exp * 1000 < Date.now()) {
           console.warn("Token expired. Logging out.");
           logout(); // Auto-logout if expired
@@ -156,7 +153,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         employee_id: employeeId,
         role,
         mustChangePassword,
-        isAuthenticated: !!token && !!role, // Better check: requires token AND role to be present
+        isAuthenticated: !!token && !!role, 
         isCheckingAuth,
         created_at: createdAt,
         login,

@@ -19,6 +19,7 @@ import EmployeePortal from "./src/pages/EmployeeDashboard/EmployeePortal";
 import UnauthorizedPage from "./src/pages/UnauthorizedPage";
 import AdminHrDashboard from "./src/pages/AdminHrDashboard";
 import LeaveRequests from "./src/pages/LeaveRequests";
+import ForgotPasswordRequest from "./src/pages/ForgotPasswordRequest"
 
 import { EmployeeProvider } from "./src/context/EmployeeContext";
 import { DTRProvider } from "./src/context/DTRContext";
@@ -37,6 +38,7 @@ const AppContent: React.FC = () => {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/change-password" element={<ChangePassword />} />
+        <Route path="/forgot-password" element={<ForgotPasswordRequest />} /> 
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route path="/logout" element={<Logout />} />
 

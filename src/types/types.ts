@@ -1,3 +1,5 @@
+
+
 export interface Employee {
   employee_id: string;
   first_name: string;
@@ -44,7 +46,7 @@ export interface DTREntry {
 export interface HolidayBreakdown {
   date: string;
   name: string;
-  type: HolidayClassification;
+  type: string;
   hours: number;
   pay: number;
 }
